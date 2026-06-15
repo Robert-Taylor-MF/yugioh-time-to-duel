@@ -10,7 +10,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
   const navItems = [
     { id: 'duel', label: 'Duelo', icon: Swords },
     { id: 'decks', label: 'Decks', icon: Layers },
-    { id: 'album', label: 'Álbum', icon: BookOpen },
+    { id: 'album', label: 'Coleção', icon: BookOpen },
     { id: 'tournaments', label: 'Torneio', icon: Trophy },
     { id: 'profile', label: 'Perfil', icon: User },
   ];
