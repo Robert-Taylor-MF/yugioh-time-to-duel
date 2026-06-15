@@ -36,12 +36,12 @@ export const ProfileView: React.FC = () => {
 
   // Preset Avatars list (Yugioh reference style)
   const avatars = [
-    { name: 'Yugi', url: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=150' }, 
-    { name: 'Kaiba', url: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=150' },
-    { name: 'Pegasus', url: 'https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?w=150' },
-    { name: 'Joey', url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=150' },
-    { name: 'Mai', url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150' },
-    { name: 'Marik', url: 'https://images.unsplash.com/photo-1628157582853-a796fa650a6a?w=150' },
+    { name: 'Yugi', url: '/avatars/yugi.jpg' }, 
+    { name: 'Kaiba', url: '/avatars/kaiba.jpg' },
+    { name: 'Pegasus', url: '/avatars/pegasus.jpg' },
+    { name: 'Joey', url: '/avatars/joye.jpg' },
+    { name: 'Mai', url: '/avatars/mai.jpg' },
+    { name: 'Marik', url: '/avatars/marik.jpg' },
   ];
 
   // --- Calculations ---

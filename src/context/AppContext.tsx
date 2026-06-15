@@ -170,7 +170,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [profile, setProfile] = useState<UserProfile>(() => getStored('profile', {
     name: 'Yugi Muto',
     nickname: 'Rei dos Jogos',
-    avatarUrl: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=150',
+    avatarUrl: '/avatars/yugi.jpg',
     wins: 15,
     losses: 3,
     isPremium: true // Sempre Lendário / Acesso Total
