@@ -230,6 +230,7 @@ export const DecksView: React.FC = () => {
   const [importCodeInput, setImportCodeInput] = useState('');
   const [importError, setImportError] = useState<string | null>(null);
   const [copiedNotification, setCopiedNotification] = useState(false);
+  const [copiedYdkNotification, setCopiedYdkNotification] = useState(false);
 
   // Find active deck
   const activeDeck = decks.find(d => d.id === activeDeckId);
@@ -464,6 +465,52 @@ export const DecksView: React.FC = () => {
     } catch (err) {
       console.error('Failed to copy share code', err);
     }
+  };
+
+  const generateYDKContent = (deck: Deck): string => {
+    let content = '#created by Yu-Gi-Oh! Time to Duel\n';
+    
+    content += '#main\n';
+    deck.mainDeck.forEach(id => {
+      content += `${id}\n`;
+    });
+    
+    content += '#extra\n';
+    deck.extraDeck.forEach(id => {
+      content += `${id}\n`;
+    });
+    
+    content += '!side\n';
+    deck.sideDeck.forEach(id => {
+      content += `${id}\n`;
+    });
+    
+    return content;
+  };
+
+  const handleCopyYDKText = (deck: Deck) => {
+    try {
+      const ydkText = generateYDKContent(deck);
+      navigator.clipboard.writeText(ydkText);
+      setCopiedYdkNotification(true);
+      setTimeout(() => setCopiedYdkNotification(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy YDK text', err);
+    }
+  };
+
+  const handleExportYDKFile = (deck: Deck) => {
+    const ydkText = generateYDKContent(deck);
+    const blob = new Blob([ydkText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${deck.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ydk`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setShowExportModal(null);
   };
 
   const parseYDK = (text: string) => {
@@ -1572,58 +1619,108 @@ export const DecksView: React.FC = () => {
       {/* Export Deck Modal */}
       {showExportModal && (
         <div className="standard-modal-overlay no-print" onClick={() => setShowExportModal(null)}>
-          <div className="standard-modal" style={{ maxWidth: '340px', width: '95%' }} onClick={e => e.stopPropagation()}>
+          <div className="standard-modal" style={{ maxWidth: '360px', width: '95%' }} onClick={e => e.stopPropagation()}>
             <h3 style={{ color: 'var(--gold)', fontSize: '15px', fontWeight: '800', margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Share2 size={16} /> Compartilhar Deck
             </h3>
             
             <p style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', lineHeight: '1.4', marginBottom: '14px' }}>
-              Escolha como deseja compartilhar o deck <strong>"{showExportModal.name}"</strong> com seus amigos:
+              Escolha o formato ideal para compartilhar o deck <strong>"{showExportModal.name}"</strong>:
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
-              <button 
-                className="btn-premium" 
-                onClick={() => handleCopyShareCode(showExportModal)}
-                style={{ 
-                  fontSize: '11px', 
-                  padding: '10px 14px', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  gap: '8px' 
-                }}
-              >
-                {copiedNotification ? (
-                  <>✓ Código Copiado!</>
-                ) : (
-                  <>
-                    <ClipboardList size={14} /> Copiar Código de Compartilhamento
-                  </>
-                )}
-              </button>
-              
-              <button 
-                className="btn-secondary" 
-                onClick={() => handleExportJSON(showExportModal)}
-                style={{ 
-                  fontSize: '11px', 
-                  padding: '10px 14px', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  gap: '8px' 
-                }}
-              >
-                <Download size={14} style={{ color: 'var(--gold)' }} /> Baixar Arquivo (.json)
-              </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* Group A: App Format */}
+              <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '10px' }}>
+                <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: '700', display: 'block', marginBottom: '6px', textTransform: 'uppercase' }}>
+                  A: Formato do Aplicativo (Completo com Combos/Caixa)
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <button 
+                    className="btn-premium" 
+                    onClick={() => handleCopyShareCode(showExportModal)}
+                    style={{ 
+                      fontSize: '11px', 
+                      padding: '8px 12px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '8px' 
+                    }}
+                  >
+                    {copiedNotification ? (
+                      <>✓ Código Copiado!</>
+                    ) : (
+                      <>
+                        <ClipboardList size={13} /> Copiar Código de Compartilhamento
+                      </>
+                    )}
+                  </button>
+                  
+                  <button 
+                    className="btn-secondary" 
+                    onClick={() => handleExportJSON(showExportModal)}
+                    style={{ 
+                      fontSize: '11px', 
+                      padding: '8px 12px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '8px' 
+                    }}
+                  >
+                    <Download size={13} style={{ color: 'var(--gold)' }} /> Baixar Arquivo (.json)
+                  </button>
+                </div>
+              </div>
+
+              {/* Group B: Simulator Format */}
+              <div style={{ paddingBottom: '10px' }}>
+                <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: '700', display: 'block', marginBottom: '6px', textTransform: 'uppercase' }}>
+                  B: Formato de Simuladores (YGOPRO / Dueling Book / YGOPRODeck)
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <button 
+                    className="btn-premium" 
+                    onClick={() => handleCopyYDKText(showExportModal)}
+                    style={{ 
+                      fontSize: '11px', 
+                      padding: '8px 12px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '8px',
+                      background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+                      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.15)'
+                    }}
+                  >
+                    {copiedYdkNotification ? (
+                      <>✓ Texto YDK Copiado!</>
+                    ) : (
+                      <>
+                        <ClipboardList size={13} /> Copiar Texto no Formato YDK
+                      </>
+                    )}
+                  </button>
+                  
+                  <button 
+                    className="btn-secondary" 
+                    onClick={() => handleExportYDKFile(showExportModal)}
+                    style={{ 
+                      fontSize: '11px', 
+                      padding: '8px 12px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '8px' 
+                    }}
+                  >
+                    <Download size={13} style={{ color: '#3b82f6' }} /> Baixar Arquivo (.ydk)
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <p style={{ fontSize: '9px', color: 'rgba(255, 255, 255, 0.4)', textAlign: 'center', margin: '0 0 14px 0' }}>
-              Ao copiar o código, você pode enviá-lo pelo WhatsApp ou Discord. Seus amigos só precisam importá-lo colando o texto!
-            </p>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
               <button className="btn-secondary" onClick={() => setShowExportModal(null)} style={{ fontSize: '11px', padding: '6px 12px' }}>
                 Fechar
               </button>
