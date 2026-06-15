@@ -83,6 +83,7 @@ export interface UserProfile {
   losses: number;
   isPremium: boolean;
   theme?: 'default' | 'dark-magician' | 'blue-eyes';
+  configured?: boolean;
 }
 
 interface AppContextType {
@@ -170,19 +171,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [tournaments, setTournaments] = useState<Tournament[]>(() => getStored('tournaments', []));
 
   const [profile, setProfile] = useState<UserProfile>(() => getStored('profile', {
-    name: 'Yugi Muto',
-    nickname: 'Rei dos Jogos',
+    name: '',
+    nickname: '',
     avatarUrl: '/avatars/yugi.jpg',
-    wins: 15,
-    losses: 3,
+    wins: 0,
+    losses: 0,
     isPremium: true, // Sempre Lendário / Acesso Total
-    theme: 'default'
+    theme: 'default',
+    configured: false
   }));
 
   // API Cards states
   const [allCards, setAllCards] = useState<Card[]>([]);
   const [loadingCards, setLoadingCards] = useState<boolean>(true);
   const [loadingError, setLoadingError] = useState<string | null>(null);
+
+  // Synchronize p1Name with profile.name
+  useEffect(() => {
+    if (profile.name) {
+      setP1Name(profile.name);
+    } else {
+      setP1Name('Duelista 1');
+    }
+  }, [profile.name]);
 
   // --- Persist to LocalStorage ---
   useEffect(() => {

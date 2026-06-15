@@ -83,25 +83,7 @@ export const ProfileView: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleIncrementWins = () => {
-    updateProfile({ wins: profile.wins + 1 });
-  };
-  
-  const handleDecrementWins = () => {
-    if (profile.wins > 0) {
-      updateProfile({ wins: profile.wins - 1 });
-    }
-  };
 
-  const handleIncrementLosses = () => {
-    updateProfile({ losses: profile.losses + 1 });
-  };
-
-  const handleDecrementLosses = () => {
-    if (profile.losses > 0) {
-      updateProfile({ losses: profile.losses - 1 });
-    }
-  };
 
   const handleExportBackup = () => {
     const keys = [
@@ -239,21 +221,13 @@ export const ProfileView: React.FC = () => {
 
       {/* Stats Grid Dashboard */}
       <div className="stats-grid">
-        <div className="stat-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+        <div className="stat-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
           <div className="stat-value">{profile.wins}</div>
           <div className="stat-label">Vitórias</div>
-          <div style={{ display: 'flex', gap: '8px', marginTop: '2px' }} className="no-print">
-            <button className="qty-btn" onClick={handleDecrementWins} style={{ padding: '2px 6px', height: '18px', width: '22px', fontSize: '9px' }}>-</button>
-            <button className="qty-btn" onClick={handleIncrementWins} style={{ padding: '2px 6px', height: '18px', width: '22px', fontSize: '9px', background: 'var(--gold)', color: '#000' }}>+</button>
-          </div>
         </div>
-        <div className="stat-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+        <div className="stat-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
           <div className="stat-value">{profile.losses}</div>
           <div className="stat-label">Derrotas</div>
-          <div style={{ display: 'flex', gap: '8px', marginTop: '2px' }} className="no-print">
-            <button className="qty-btn" onClick={handleDecrementLosses} style={{ padding: '2px 6px', height: '18px', width: '22px', fontSize: '9px' }}>-</button>
-            <button className="qty-btn" onClick={handleIncrementLosses} style={{ padding: '2px 6px', height: '18px', width: '22px', fontSize: '9px', background: 'var(--gold)', color: '#000' }}>+</button>
-          </div>
         </div>
         <div className="stat-box" style={{ borderColor: winrate >= 70 ? 'var(--gold-glow)' : 'rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <div className="stat-value" style={{ color: winrate >= 70 ? 'var(--gold)' : '#fff' }}>{winrate}%</div>

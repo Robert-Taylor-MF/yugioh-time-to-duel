@@ -14,7 +14,9 @@ export const DuelView: React.FC = () => {
     resetDuel,
     rollDice,
     flipCoin,
-    updatePlayerNames
+    updatePlayerNames,
+    profile,
+    updateProfile
   } = useApp();
 
   // --- States ---
@@ -37,6 +39,29 @@ export const DuelView: React.FC = () => {
 
   // Sound simulation (UI Haptic Feedback)
   const [soundEnabled, setSoundEnabled] = useState(true);
+
+  // --- Duel Outcome Modal ---
+  const [duelOutcome, setDuelOutcome] = useState<'victory' | 'defeat' | null>(null);
+
+  React.useEffect(() => {
+    if (p1Lp === 0 && p2Lp > 0) {
+      setDuelOutcome('defeat');
+    } else if (p2Lp === 0 && p1Lp > 0) {
+      setDuelOutcome('victory');
+    } else {
+      setDuelOutcome(null);
+    }
+  }, [p1Lp, p2Lp]);
+
+  const handleConfirmOutcome = () => {
+    if (duelOutcome === 'victory') {
+      updateProfile({ wins: (profile.wins || 0) + 1 });
+    } else if (duelOutcome === 'defeat') {
+      updateProfile({ losses: (profile.losses || 0) + 1 });
+    }
+    resetDuel();
+    setDuelOutcome(null);
+  };
 
   const playBeep = () => {
     if (!soundEnabled) return;
@@ -300,10 +325,11 @@ export const DuelView: React.FC = () => {
                 <input
                   type="text"
                   className="textbox"
-                  value={tempP1Name}
-                  onChange={(e) => setTempP1Name(e.target.value)}
-                  style={{ width: '100%', marginTop: '4px' }}
+                  value={profile.name || 'Jogador Principal'}
+                  disabled
+                  style={{ width: '100%', marginTop: '4px', opacity: 0.5, cursor: 'not-allowed', background: 'rgba(0,0,0,0.2)' }}
                 />
+                <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', marginTop: '2px', display: 'block' }}>Definido nas configurações do seu Perfil.</span>
               </div>
               <div>
                 <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>Nome do Duelista 2 (Blue)</label>
@@ -404,6 +430,84 @@ export const DuelView: React.FC = () => {
                 }}
               >
                 Sim, Resetar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Duel Outcome Modal Overlay */}
+      {duelOutcome && (
+        <div className="standard-modal-overlay no-print">
+          <div 
+            className="standard-modal premium-glow" 
+            style={{ 
+              maxWidth: '320px', 
+              textAlign: 'center',
+              border: duelOutcome === 'victory' ? '1px solid rgba(212, 175, 55, 0.3)' : '1px solid rgba(255, 75, 75, 0.3)',
+              boxShadow: duelOutcome === 'victory' ? '0 0 20px rgba(212, 175, 55, 0.15)' : '0 0 20px rgba(255, 75, 75, 0.15)',
+              background: 'radial-gradient(circle at center, #151821 0%, #0b0c10 100%)'
+            }}
+          >
+            <div style={{ fontSize: '48px', marginBottom: '12px' }}>
+              {duelOutcome === 'victory' ? '🏆' : '💀'}
+            </div>
+            <h3 style={{ 
+              color: duelOutcome === 'victory' ? 'var(--gold)' : 'var(--red)', 
+              fontSize: '18px', 
+              fontWeight: '900',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              margin: '0 0 8px 0'
+            }}>
+              {duelOutcome === 'victory' ? 'Vitória!' : 'Derrota!'}
+            </h3>
+            <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.8)', lineHeight: '1.5', margin: '0 0 16px 0' }}>
+              {duelOutcome === 'victory' 
+                ? `Você venceu o duelo contra ${p2Name}!`
+                : `Você foi derrotado por ${p2Name}!`}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <button
+                className="btn-premium"
+                onClick={handleConfirmOutcome}
+                style={{
+                  fontSize: '12px',
+                  padding: '10px 16px',
+                  width: '100%',
+                  background: duelOutcome === 'victory' 
+                    ? 'linear-gradient(135deg, var(--gold) 0%, #b89020 100%)'
+                    : 'linear-gradient(135deg, var(--red) 0%, #b31d38 100%)',
+                  boxShadow: duelOutcome === 'victory'
+                    ? '0 4px 15px rgba(212, 175, 55, 0.25)'
+                    : '0 4px 15px rgba(255, 75, 75, 0.25)',
+                  color: duelOutcome === 'victory' ? '#000' : '#fff',
+                  fontWeight: 'bold',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer'
+                }}
+              >
+                Registrar Resultado e Reiniciar
+              </button>
+              <button 
+                className="btn-secondary" 
+                onClick={() => {
+                  playBeep();
+                  undoLastAction();
+                }}
+                style={{ 
+                  fontSize: '11px', 
+                  padding: '8px 16px',
+                  width: '100%',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '8px',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  cursor: 'pointer'
+                }}
+              >
+                Desfazer Última Ação (Corrigir)
               </button>
             </div>
           </div>
