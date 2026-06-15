@@ -14,9 +14,72 @@ import {
   BookOpen, 
   Wand2, 
   Sparkles,
-  ClipboardList
+  ClipboardList,
+  Image as ImageIcon
 } from 'lucide-react';
 import { type Card } from '../data/defaultCards';
+
+interface DeckBoxProps {
+  card?: Card;
+  onClick?: (e: React.MouseEvent) => void;
+  size?: 'sm' | 'md' | 'lg';
+}
+
+const DeckBox: React.FC<DeckBoxProps> = ({ card, onClick, size = 'md' }) => {
+  const width = size === 'sm' ? '38px' : size === 'lg' ? '120px' : '70px';
+  const height = size === 'sm' ? '52px' : size === 'lg' ? '160px' : '95px';
+  
+  const cardBackUrl = "https://images.ygoprodeck.com/images/cards/back.jpg";
+  const bgImage = card ? card.imageUrlSmall || card.imageUrl : cardBackUrl;
+
+  return (
+    <div 
+      onClick={onClick}
+      style={{
+        width,
+        height,
+        position: 'relative',
+        borderRadius: '5px',
+        backgroundImage: `url(${bgImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        border: card ? '1.5px solid var(--gold)' : '1.5px solid rgba(255, 255, 255, 0.15)',
+        boxShadow: '0 3px 6px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.15)',
+        cursor: onClick ? 'pointer' : 'default',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-end',
+        flexShrink: 0
+      }}
+      title={card ? `Capa: ${card.name}` : "Sem capa (clique para definir)"}
+    >
+      {/* Lid flap detail */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '12%',
+        background: card ? 'linear-gradient(to bottom, var(--gold), #966e14)' : 'linear-gradient(to bottom, rgba(255,255,255,0.2), rgba(255,255,255,0.05))',
+        borderBottom: '1px solid rgba(0,0,0,0.3)',
+        zIndex: 2
+      }} />
+
+      {/* Glossy sheen */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 60%)',
+        pointerEvents: 'none',
+        zIndex: 1
+      }} />
+    </div>
+  );
+};
 
 export const DecksView: React.FC = () => {
   const {
@@ -39,6 +102,7 @@ export const DecksView: React.FC = () => {
 
   // Selector modal drawer
   const [showCardSelector, setShowCardSelector] = useState(false);
+  const [showCoverSelector, setShowCoverSelector] = useState(false);
   const [selectorSearch, setSelectorSearch] = useState('');
   const [selectorTypeFilter, setSelectorTypeFilter] = useState<'All' | 'Monster' | 'Spell' | 'Trap' | 'Extra'>('All');
 
@@ -271,18 +335,25 @@ export const DecksView: React.FC = () => {
     return (
       <div className="decks-container" style={{ paddingBottom: '20px' }}>
         {/* Editor Header */}
-        <div className="deck-editor-header">
-          <button className="tool-btn" onClick={() => { setActiveDeckId(null); setEditorTab('cards'); }}>
+        <div className="deck-editor-header" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button className="tool-btn" onClick={() => { setActiveDeckId(null); setEditorTab('cards'); }} style={{ flexShrink: 0 }}>
             <ArrowLeft size={16} /> Voltar
           </button>
-          <div style={{ textAlign: 'center', flex: 1 }}>
-            <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#fff' }}>{activeDeck.name}</h3>
-            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>
+          
+          <DeckBox 
+            card={allCards.find(c => c.id === activeDeck.coverCardId)} 
+            size="sm" 
+            onClick={() => setShowCoverSelector(true)} 
+          />
+
+          <div style={{ textAlign: 'left', flex: 1 }}>
+            <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#fff', margin: '0 0 2px 0' }}>{activeDeck.name}</h3>
+            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', display: 'block' }}>
               Total: {activeDeck.mainDeck.length + activeDeck.extraDeck.length + activeDeck.sideDeck.length} cartas
             </span>
           </div>
           {editorTab === 'cards' && (
-            <button className="btn-premium" onClick={() => setShowCardSelector(true)}>
+            <button className="btn-premium" onClick={() => setShowCardSelector(true)} style={{ flexShrink: 0 }}>
               <Plus size={16} /> Adicionar
             </button>
           )}
@@ -349,13 +420,31 @@ export const DecksView: React.FC = () => {
                         >
                           {card?.name || 'Carta'}
                         </span>
-                        <button 
-                          onClick={() => removeCardFromDeck(cardId, 'main')}
-                          style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '9px', padding: '0 2px' }}
-                          title="Remover"
-                        >
-                          ✕
-                        </button>
+                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                          <button
+                            onClick={() => updateDeck(activeDeck.id, activeDeck.mainDeck, activeDeck.extraDeck, activeDeck.sideDeck, activeDeck.combos, activeDeck.strategies, cardId)}
+                            style={{ 
+                              background: 'none', 
+                              border: 'none', 
+                              color: activeDeck.coverCardId === cardId ? 'var(--gold)' : 'rgba(255,255,255,0.25)', 
+                              cursor: 'pointer', 
+                              fontSize: '10px', 
+                              padding: '0 2px',
+                              display: 'flex',
+                              alignItems: 'center'
+                            }}
+                            title="Definir como capa do deck"
+                          >
+                            <ImageIcon size={11} style={{ color: activeDeck.coverCardId === cardId ? 'var(--gold)' : 'inherit' }} />
+                          </button>
+                          <button 
+                            onClick={() => removeCardFromDeck(cardId, 'main')}
+                            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '9px', padding: '0 2px' }}
+                            title="Remover"
+                          >
+                            ✕
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
@@ -390,13 +479,31 @@ export const DecksView: React.FC = () => {
                         >
                           {card?.name || 'Carta Extra'}
                         </span>
-                        <button 
-                          onClick={() => removeCardFromDeck(cardId, 'extra')}
-                          style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '9px', padding: '0 2px' }}
-                          title="Remover"
-                        >
-                          ✕
-                        </button>
+                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                          <button
+                            onClick={() => updateDeck(activeDeck.id, activeDeck.mainDeck, activeDeck.extraDeck, activeDeck.sideDeck, activeDeck.combos, activeDeck.strategies, cardId)}
+                            style={{ 
+                              background: 'none', 
+                              border: 'none', 
+                              color: activeDeck.coverCardId === cardId ? 'var(--gold)' : 'rgba(255,255,255,0.25)', 
+                              cursor: 'pointer', 
+                              fontSize: '10px', 
+                              padding: '0 2px',
+                              display: 'flex',
+                              alignItems: 'center'
+                            }}
+                            title="Definir como capa do deck"
+                          >
+                            <ImageIcon size={11} style={{ color: activeDeck.coverCardId === cardId ? 'var(--gold)' : 'inherit' }} />
+                          </button>
+                          <button 
+                            onClick={() => removeCardFromDeck(cardId, 'extra')}
+                            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '9px', padding: '0 2px' }}
+                            title="Remover"
+                          >
+                            ✕
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
@@ -431,13 +538,31 @@ export const DecksView: React.FC = () => {
                         >
                           {card?.name || 'Carta Side'}
                         </span>
-                        <button 
-                          onClick={() => removeCardFromDeck(cardId, 'side')}
-                          style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '9px', padding: '0 2px' }}
-                          title="Remover"
-                        >
-                          ✕
-                        </button>
+                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                          <button
+                            onClick={() => updateDeck(activeDeck.id, activeDeck.mainDeck, activeDeck.extraDeck, activeDeck.sideDeck, activeDeck.combos, activeDeck.strategies, cardId)}
+                            style={{ 
+                              background: 'none', 
+                              border: 'none', 
+                              color: activeDeck.coverCardId === cardId ? 'var(--gold)' : 'rgba(255,255,255,0.25)', 
+                              cursor: 'pointer', 
+                              fontSize: '10px', 
+                              padding: '0 2px',
+                              display: 'flex',
+                              alignItems: 'center'
+                            }}
+                            title="Definir como capa do deck"
+                          >
+                            <ImageIcon size={11} style={{ color: activeDeck.coverCardId === cardId ? 'var(--gold)' : 'inherit' }} />
+                          </button>
+                          <button 
+                            onClick={() => removeCardFromDeck(cardId, 'side')}
+                            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '9px', padding: '0 2px' }}
+                            title="Remover"
+                          >
+                            ✕
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
@@ -923,6 +1048,97 @@ export const DecksView: React.FC = () => {
             onClose={() => setSelectedCardDetail(null)} 
           />
         )}
+
+        {/* Cover Selector Modal */}
+        {showCoverSelector && activeDeck && (
+          <div className="standard-modal-overlay no-print" onClick={() => setShowCoverSelector(false)}>
+            <div className="standard-modal" style={{ maxWidth: '360px', width: '95%' }} onClick={e => e.stopPropagation()}>
+              <h3 style={{ color: 'var(--gold)', fontSize: '15px', fontWeight: '800', margin: '0 0 12px 0' }}>
+                Selecionar Capa do Deck
+              </h3>
+              
+              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', marginBottom: '12px' }}>
+                Escolha uma carta do seu deck para ilustrar o deck box:
+              </p>
+
+              {uniqueCardIds.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '20px', color: 'rgba(255,255,255,0.3)', fontSize: '12px' }}>
+                  Adicione cartas ao deck antes de escolher a capa.
+                </div>
+              ) : (
+                <div style={{ 
+                  maxHeight: '220px', 
+                  overflowY: 'auto', 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(3, 1fr)', 
+                  gap: '8px',
+                  background: 'rgba(0,0,0,0.2)',
+                  padding: '10px',
+                  borderRadius: '8px',
+                  marginBottom: '12px'
+                }}>
+                  {uniqueCardIds.map(cardId => {
+                    const card = allCards.find(c => c.id === cardId);
+                    if (!card) return null;
+                    return (
+                      <div
+                        key={cardId}
+                        onClick={() => {
+                          updateDeck(activeDeck.id, activeDeck.mainDeck, activeDeck.extraDeck, activeDeck.sideDeck, activeDeck.combos, activeDeck.strategies, card.id);
+                          setShowCoverSelector(false);
+                        }}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '4px',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          borderRadius: '6px',
+                          border: activeDeck.coverCardId === cardId ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.05)',
+                          background: activeDeck.coverCardId === cardId ? 'rgba(212,175,55,0.08)' : 'rgba(255,255,255,0.02)',
+                          transition: 'all 0.2s'
+                        }}
+                        className="cover-select-option"
+                      >
+                        <img 
+                          src={card.imageUrlSmall || card.imageUrl} 
+                          alt={card.name} 
+                          style={{ width: '100%', height: '80px', objectFit: 'cover', borderRadius: '4px', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}
+                        />
+                        <span style={{ fontSize: '8px', color: '#fff', textAlign: 'center', width: '100%', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', marginTop: '2px' }}>
+                          {card.name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                {activeDeck.coverCardId && (
+                  <button 
+                    className="btn-secondary" 
+                    onClick={() => {
+                      updateDeck(activeDeck.id, activeDeck.mainDeck, activeDeck.extraDeck, activeDeck.sideDeck, activeDeck.combos, activeDeck.strategies, null);
+                      setShowCoverSelector(false);
+                    }}
+                    style={{ fontSize: '11px', padding: '6px 12px', border: '1px solid var(--red)', color: 'var(--red)' }}
+                  >
+                    Remover Capa
+                  </button>
+                )}
+                <button 
+                  className="btn-secondary" 
+                  onClick={() => setShowCoverSelector(false)} 
+                  style={{ fontSize: '11px', padding: '6px 12px' }}
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -943,31 +1159,34 @@ export const DecksView: React.FC = () => {
             Nenhum deck criado. Comece criando um novo deck!
           </div>
         ) : (
-          decks.map(deck => (
-            <div key={deck.id} className="deck-list-item">
-              <div onClick={() => setActiveDeckId(deck.id)} style={{ flex: 1 }}>
-                {isRenamingId === deck.id ? (
-                  <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', gap: '6px' }}>
-                    <input
-                      type="text"
-                      className="textbox"
-                      value={renameInputValue}
-                      onChange={(e) => setRenameInputValue(e.target.value)}
-                      style={{ padding: '4px 8px', fontSize: '13px' }}
-                    />
-                    <button className="qty-btn" onClick={() => handleSaveRename(deck.id)}>
-                      <Check size={12} />
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="deck-name">{deck.name}</div>
-                    <div className="deck-count-sub">
-                      Main: {deck.mainDeck.length} | Extra: {deck.extraDeck.length} | Side: {deck.sideDeck.length}
+          decks.map(deck => {
+            const coverCard = allCards.find(c => c.id === deck.coverCardId);
+            return (
+              <div key={deck.id} className="deck-list-item" style={{ display: 'flex', gap: '12px', alignItems: 'center' }} onClick={() => setActiveDeckId(deck.id)}>
+                <DeckBox card={coverCard} size="sm" />
+                <div style={{ flex: 1 }}>
+                  {isRenamingId === deck.id ? (
+                    <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', gap: '6px' }}>
+                      <input
+                        type="text"
+                        className="textbox"
+                        value={renameInputValue}
+                        onChange={(e) => setRenameInputValue(e.target.value)}
+                        style={{ padding: '4px 8px', fontSize: '13px' }}
+                      />
+                      <button className="qty-btn" onClick={() => handleSaveRename(deck.id)}>
+                        <Check size={12} />
+                      </button>
                     </div>
-                  </>
-                )}
-              </div>
+                  ) : (
+                    <>
+                      <div className="deck-name">{deck.name}</div>
+                      <div className="deck-count-sub">
+                        Main: {deck.mainDeck.length} | Extra: {deck.extraDeck.length} | Side: {deck.sideDeck.length}
+                      </div>
+                    </>
+                  )}
+                </div>
 
               {/* Action Buttons */}
               <div style={{ display: 'flex', gap: '8px', marginLeft: '10px' }} onClick={(e) => e.stopPropagation()}>
@@ -987,9 +1206,10 @@ export const DecksView: React.FC = () => {
                 >
                   <Trash2 size={12} />
                 </button>
-              </div>
             </div>
-          ))
+          </div>
+        );
+      })
         )}
       </div>
 

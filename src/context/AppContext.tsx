@@ -45,6 +45,7 @@ export interface Deck {
   createdAt: string;
   combos?: DeckCombo[];
   strategies?: string;
+  coverCardId?: string;
 }
 
 export interface TournamentMatch {
@@ -117,7 +118,7 @@ interface AppContextType {
   decks: Deck[];
   createDeck: (name: string) => Deck;
   deleteDeck: (deckId: string) => void;
-  updateDeck: (deckId: string, mainDeck: string[], extraDeck: string[], sideDeck: string[], combos?: DeckCombo[], strategies?: string) => void;
+  updateDeck: (deckId: string, mainDeck: string[], extraDeck: string[], sideDeck: string[], combos?: DeckCombo[], strategies?: string, coverCardId?: string | null) => void;
   renameDeck: (deckId: string, newName: string) => void;
 
   // Tournaments
@@ -474,7 +475,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     extraDeck: string[], 
     sideDeck: string[],
     combos?: DeckCombo[],
-    strategies?: string
+    strategies?: string,
+    coverCardId?: string | null
   ) => {
     setDecks(prev => prev.map(d =>
       d.id === deckId ? { 
@@ -483,7 +485,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         extraDeck, 
         sideDeck,
         combos: combos !== undefined ? combos : d.combos,
-        strategies: strategies !== undefined ? strategies : d.strategies
+        strategies: strategies !== undefined ? strategies : d.strategies,
+        coverCardId: coverCardId !== undefined ? (coverCardId === null ? undefined : coverCardId) : d.coverCardId
       } : d
     ));
   };
