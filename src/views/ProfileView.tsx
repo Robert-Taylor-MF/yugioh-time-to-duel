@@ -329,7 +329,7 @@ export const ProfileView: React.FC = () => {
             }}
           >
             <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#d4af37', border: '1px solid #fff' }} />
-            <strong style={{ fontSize: '10px', color: '#fff' }}>Relíquia</strong>
+            <strong style={{ fontSize: '10px', color: '#fff' }}>Millennium Puzzle</strong>
             <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.4)' }}>Padrão Ouro</span>
           </div>
 
