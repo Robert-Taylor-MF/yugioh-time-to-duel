@@ -301,6 +301,84 @@ export const ProfileView: React.FC = () => {
         )}
       </div>
 
+      {/* Themes Customization section */}
+      <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <h3 style={{ fontSize: '13px', fontWeight: '700', color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Sparkles size={14} /> Tema do Aplicativo
+        </h3>
+        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', lineHeight: '1.4' }}>
+          Personalize as cores principais e a atmosfera do aplicativo escolhendo um dos temas premium icônicos:
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginTop: '4px' }}>
+          {/* Default Theme Option */}
+          <div 
+            onClick={() => updateProfile({ theme: 'default' })}
+            style={{
+              cursor: 'pointer',
+              border: `1px solid ${profile.theme === 'default' || !profile.theme ? 'var(--gold)' : 'rgba(255,255,255,0.06)'}`,
+              background: profile.theme === 'default' || !profile.theme ? 'rgba(212, 175, 55, 0.08)' : 'rgba(0,0,0,0.15)',
+              borderRadius: '8px',
+              padding: '10px 6px',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '4px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#d4af37', border: '1px solid #fff' }} />
+            <strong style={{ fontSize: '10px', color: '#fff' }}>Relíquia</strong>
+            <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.4)' }}>Padrão Ouro</span>
+          </div>
+
+          {/* Dark Magician Theme Option */}
+          <div 
+            onClick={() => updateProfile({ theme: 'dark-magician' })}
+            style={{
+              cursor: 'pointer',
+              border: `1px solid ${profile.theme === 'dark-magician' ? '#b86bff' : 'rgba(255,255,255,0.06)'}`,
+              background: profile.theme === 'dark-magician' ? 'rgba(184, 107, 255, 0.08)' : 'rgba(0,0,0,0.15)',
+              borderRadius: '8px',
+              padding: '10px 6px',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '4px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: 'linear-gradient(135deg, #1e0b36 0%, #b86bff 100%)', border: '1px solid #fff' }} />
+            <strong style={{ fontSize: '10px', color: '#fff' }}>Dark Magician</strong>
+            <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.4)' }}>Roxo Neon</span>
+          </div>
+
+          {/* Blue-Eyes Theme Option */}
+          <div 
+            onClick={() => updateProfile({ theme: 'blue-eyes' })}
+            style={{
+              cursor: 'pointer',
+              border: `1px solid ${profile.theme === 'blue-eyes' ? '#38bdf8' : 'rgba(255,255,255,0.06)'}`,
+              background: profile.theme === 'blue-eyes' ? 'rgba(56, 189, 248, 0.08)' : 'rgba(0,0,0,0.15)',
+              borderRadius: '8px',
+              padding: '10px 6px',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '4px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: 'linear-gradient(135deg, #023e8a 0%, #38bdf8 100%)', border: '1px solid #fff' }} />
+            <strong style={{ fontSize: '10px', color: '#fff' }}>Blue-Eye</strong>
+            <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.4)' }}>Azul Dragão</span>
+          </div>
+        </div>
+      </div>
+
       {/* Tournaments History list */}
       <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>

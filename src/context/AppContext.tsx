@@ -81,6 +81,7 @@ export interface UserProfile {
   wins: number;
   losses: number;
   isPremium: boolean;
+  theme?: 'default' | 'dark-magician' | 'blue-eyes';
 }
 
 interface AppContextType {
@@ -173,7 +174,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     avatarUrl: '/avatars/yugi.jpg',
     wins: 15,
     losses: 3,
-    isPremium: true // Sempre Lendário / Acesso Total
+    isPremium: true, // Sempre Lendário / Acesso Total
+    theme: 'default'
   }));
 
   // API Cards states

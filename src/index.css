@@ -120,3 +120,30 @@ body {
     box-shadow: none !important;
   }
 }
+
+/* --- Premium Themes --- */
+.theme-dark-magician {
+  --bg-color: #030107;
+  --bg-darker: #010002;
+  --bg-lighter: #0e071a;
+  --card-bg: rgba(14, 7, 28, 0.85);
+  --card-hover: rgba(28, 14, 50, 0.9);
+  
+  --gold: #b86bff;
+  --gold-glow: rgba(184, 107, 255, 0.45);
+  --gold-bright: #f472b6;
+  --border-glow: 1px solid rgba(184, 107, 255, 0.3);
+}
+
+.theme-blue-eyes {
+  --bg-color: #01040a;
+  --bg-darker: #000103;
+  --bg-lighter: #091322;
+  --card-bg: rgba(8, 18, 36, 0.85);
+  --card-hover: rgba(16, 32, 60, 0.9);
+  
+  --gold: #38bdf8;
+  --gold-glow: rgba(56, 189, 248, 0.45);
+  --gold-bright: #93c5fd;
+  --border-glow: 1px solid rgba(56, 189, 248, 0.3);
+}
