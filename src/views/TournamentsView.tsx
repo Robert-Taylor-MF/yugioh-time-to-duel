@@ -8,14 +8,19 @@ export const TournamentsView: React.FC = () => {
     createTournament,
     declareMatchWinner,
     resetTournament,
-    deleteTournament
+    deleteTournament,
+    decks
   } = useApp();
 
   // --- States & Refs ---
   const [tournamentName, setTournamentName] = useState('');
   const [tournamentMode, setTournamentMode] = useState<'single' | 'podium'>('single');
   const [newPlayerName, setNewPlayerName] = useState('');
+  const [newPlayerDeck, setNewPlayerDeck] = useState('');
+  const [customDeckName, setCustomDeckName] = useState('');
+  const [deckInputMode, setDeckInputMode] = useState<'select' | 'custom'>('select');
   const [playersList, setPlayersList] = useState<string[]>([]);
+  const [playerDecks, setPlayerDecks] = useState<Record<string, string>>({});
   const [activeTournamentId, setActiveTournamentId] = useState<string | null>(null);
 
   // Drag Scroll state
@@ -47,11 +52,26 @@ export const TournamentsView: React.FC = () => {
       return;
     }
     setPlayersList(prev => [...prev, name]);
+    
+    const deckName = deckInputMode === 'select' ? newPlayerDeck.trim() : customDeckName.trim();
+    if (deckName) {
+      setPlayerDecks(prev => ({ ...prev, [name]: deckName }));
+    }
+
     setNewPlayerName('');
+    setNewPlayerDeck('');
+    setCustomDeckName('');
+    setDeckInputMode('select');
   };
 
   const handleRemovePlayer = (index: number) => {
+    const nameToRemove = playersList[index];
     setPlayersList(prev => prev.filter((_, i) => i !== index));
+    setPlayerDecks(prev => {
+      const copy = { ...prev };
+      delete copy[nameToRemove];
+      return copy;
+    });
   };
 
   const handleStartTournament = () => {
@@ -60,11 +80,16 @@ export const TournamentsView: React.FC = () => {
       return;
     }
     const name = tournamentName.trim() || `Torneio de Duelos #${tournaments.length + 1}`;
-    createTournament(name, playersList, tournamentMode);
+    createTournament(name, playersList, tournamentMode, playerDecks);
     
     // Clear registration state
     setTournamentName('');
     setPlayersList([]);
+    setPlayerDecks({});
+    setNewPlayerName('');
+    setNewPlayerDeck('');
+    setCustomDeckName('');
+    setDeckInputMode('select');
     setIsCreating(false);
   };
 
@@ -228,7 +253,10 @@ export const TournamentsView: React.FC = () => {
                       alignItems: 'center',
                       padding: '2px'
                     }}>
-                      <span style={{ fontSize: '11px', fontWeight: '700', color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '76px' }}>
+                      <span 
+                        title={activeTournament.secondPlace ? `${activeTournament.secondPlace}${activeTournament.playerDecks?.[activeTournament.secondPlace] ? ` (${activeTournament.playerDecks[activeTournament.secondPlace]})` : ''}` : undefined}
+                        style={{ fontSize: '11px', fontWeight: '700', color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '76px' }}
+                      >
                         {activeTournament.secondPlace}
                       </span>
                     </div>
@@ -252,7 +280,10 @@ export const TournamentsView: React.FC = () => {
                     padding: '2px',
                     boxShadow: '0 0 10px rgba(212, 175, 55, 0.1)'
                   }}>
-                    <span style={{ fontSize: '12px', fontWeight: '800', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '86px' }}>
+                    <span 
+                      title={activeTournament.winner ? `${activeTournament.winner}${activeTournament.playerDecks?.[activeTournament.winner] ? ` (${activeTournament.playerDecks[activeTournament.winner]})` : ''}` : undefined}
+                      style={{ fontSize: '12px', fontWeight: '800', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '86px' }}
+                    >
                       {activeTournament.winner}
                     </span>
                   </div>
@@ -275,7 +306,10 @@ export const TournamentsView: React.FC = () => {
                       alignItems: 'center',
                       padding: '2px'
                     }}>
-                      <span style={{ fontSize: '11px', fontWeight: '700', color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '76px' }}>
+                      <span 
+                        title={activeTournament.thirdPlaceWinner ? `${activeTournament.thirdPlaceWinner}${activeTournament.playerDecks?.[activeTournament.thirdPlaceWinner] ? ` (${activeTournament.playerDecks[activeTournament.thirdPlaceWinner]})` : ''}` : undefined}
+                        style={{ fontSize: '11px', fontWeight: '700', color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '76px' }}
+                      >
                         {activeTournament.thirdPlaceWinner}
                       </span>
                     </div>
@@ -287,7 +321,9 @@ export const TournamentsView: React.FC = () => {
                 <Award size={20} style={{ color: 'var(--gold)' }} />
                 <div style={{ textAlign: 'left' }}>
                   <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontWeight: '800' }}>Vencedor</span>
-                  <p style={{ fontSize: '15px', fontWeight: '700', color: '#fff', margin: 0 }}>{activeTournament.winner}</p>
+                  <p style={{ fontSize: '15px', fontWeight: '700', color: '#fff', margin: 0 }}>
+                    {activeTournament.winner}{activeTournament.playerDecks?.[activeTournament.winner] ? ` (${activeTournament.playerDecks[activeTournament.winner]})` : ''}
+                  </p>
                 </div>
               </div>
             )}
@@ -431,8 +467,11 @@ export const TournamentsView: React.FC = () => {
                                 color: p1Winner ? 'var(--gold)' : p1Loser ? 'rgba(255,255,255,0.25)' : '#fff'
                               }}
                             >
-                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '110px' }}>
-                                {match.player1 || 'Aguardando...'}
+                              <span 
+                                title={match.player1 ? `${match.player1}${activeTournament?.playerDecks?.[match.player1] ? ` (${activeTournament.playerDecks[match.player1]})` : ''}` : undefined}
+                                style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '110px' }}
+                              >
+                                {match.player1 ? `${match.player1}${activeTournament?.playerDecks?.[match.player1] ? ` (${activeTournament.playerDecks[match.player1]})` : ''}` : 'Aguardando...'}
                               </span>
                               {p1Winner && <span style={{ fontSize: '10px' }}>👑</span>}
                             </div>
@@ -452,8 +491,11 @@ export const TournamentsView: React.FC = () => {
                                 color: p2Winner ? 'var(--gold)' : p2Loser ? 'rgba(255,255,255,0.25)' : '#fff'
                               }}
                             >
-                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '110px' }}>
-                                {match.player2 || 'Aguardando...'}
+                              <span 
+                                title={match.player2 ? `${match.player2}${activeTournament?.playerDecks?.[match.player2] ? ` (${activeTournament.playerDecks[match.player2]})` : ''}` : undefined}
+                                style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '110px' }}
+                              >
+                                {match.player2 ? `${match.player2}${activeTournament?.playerDecks?.[match.player2] ? ` (${activeTournament.playerDecks[match.player2]})` : ''}` : 'Aguardando...'}
                               </span>
                               {p2Winner && <span style={{ fontSize: '10px' }}>👑</span>}
                             </div>
@@ -529,8 +571,11 @@ export const TournamentsView: React.FC = () => {
                   background: activeTournament.thirdPlaceWinner === activeTournament.thirdPlaceMatch.player1 ? 'rgba(212,175,55,0.05)' : 'transparent'
                 }}
               >
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100px' }}>
-                  {activeTournament.thirdPlaceMatch.player1 || 'Aguardando...'}
+                <span 
+                  title={activeTournament.thirdPlaceMatch.player1 ? `${activeTournament.thirdPlaceMatch.player1}${activeTournament?.playerDecks?.[activeTournament.thirdPlaceMatch.player1] ? ` (${activeTournament.playerDecks[activeTournament.thirdPlaceMatch.player1]})` : ''}` : undefined}
+                  style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100px' }}
+                >
+                  {activeTournament.thirdPlaceMatch.player1 ? `${activeTournament.thirdPlaceMatch.player1}${activeTournament?.playerDecks?.[activeTournament.thirdPlaceMatch.player1] ? ` (${activeTournament.playerDecks[activeTournament.thirdPlaceMatch.player1]})` : ''}` : 'Aguardando...'}
                 </span>
                 {activeTournament.thirdPlaceWinner === activeTournament.thirdPlaceMatch.player1 && <span style={{ fontSize: '9px' }}>🥉</span>}
               </div>
@@ -558,8 +603,11 @@ export const TournamentsView: React.FC = () => {
                   background: activeTournament.thirdPlaceWinner === activeTournament.thirdPlaceMatch.player2 ? 'rgba(212,175,55,0.05)' : 'transparent'
                 }}
               >
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100px' }}>
-                  {activeTournament.thirdPlaceMatch.player2 || 'Aguardando...'}
+                <span 
+                  title={activeTournament.thirdPlaceMatch.player2 ? `${activeTournament.thirdPlaceMatch.player2}${activeTournament?.playerDecks?.[activeTournament.thirdPlaceMatch.player2] ? ` (${activeTournament.playerDecks[activeTournament.thirdPlaceMatch.player2]})` : ''}` : undefined}
+                  style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100px' }}
+                >
+                  {activeTournament.thirdPlaceMatch.player2 ? `${activeTournament.thirdPlaceMatch.player2}${activeTournament?.playerDecks?.[activeTournament.thirdPlaceMatch.player2] ? ` (${activeTournament.playerDecks[activeTournament.thirdPlaceMatch.player2]})` : ''}` : 'Aguardando...'}
                 </span>
                 {activeTournament.thirdPlaceWinner === activeTournament.thirdPlaceMatch.player2 && <span style={{ fontSize: '9px' }}>🥉</span>}
               </div>
@@ -720,20 +768,71 @@ export const TournamentsView: React.FC = () => {
           </select>
         </div>
 
-        {/* Player Name Input */}
-        <form onSubmit={handleAddPlayer} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: '600' }}>ADICIONAR JOGADOR:</label>
-          <div className="input-row">
+        {/* Player Name & Deck Inputs */}
+        <form onSubmit={handleAddPlayer} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: '600' }}>NOME DO JOGADOR:</label>
             <input
               type="text"
               className="textbox"
               placeholder="Digite o nome do jogador..."
               value={newPlayerName}
               onChange={(e) => setNewPlayerName(e.target.value)}
+              style={{ padding: '8px 12px', fontSize: '12px' }}
             />
-            <button className="qty-btn" type="submit" style={{ borderRadius: '8px', width: '38px', height: '38px' }}>
-              <Plus size={16} />
-            </button>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: '600' }}>DECK DO JOGADOR:</label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {deckInputMode === 'select' ? (
+                <select
+                  className="textbox"
+                  value={newPlayerDeck}
+                  onChange={(e) => {
+                    if (e.target.value === 'custom_input') {
+                      setDeckInputMode('custom');
+                      setNewPlayerDeck('');
+                    } else {
+                      setNewPlayerDeck(e.target.value);
+                    }
+                  }}
+                  style={{ flex: 1, padding: '8px 12px', fontSize: '12px', background: 'rgba(20,24,35,0.8)', color: '#fff', border: '1px solid rgba(255,255,255,0.08)' }}
+                >
+                  <option value="">Sem Deck (Não informar)</option>
+                  {decks.map(d => (
+                    <option key={d.id} value={d.name}>{d.name}</option>
+                  ))}
+                  <option value="custom_input">-- Digitar Deck Personalizado --</option>
+                </select>
+              ) : (
+                <div style={{ flex: 1, display: 'flex', gap: '4px' }}>
+                  <input
+                    type="text"
+                    className="textbox"
+                    placeholder="Digite o nome do deck..."
+                    value={customDeckName}
+                    onChange={(e) => setCustomDeckName(e.target.value)}
+                    style={{ flex: 1, padding: '8px 12px', fontSize: '12px' }}
+                  />
+                  <button 
+                    type="button" 
+                    className="qty-btn"
+                    onClick={() => {
+                      setDeckInputMode('select');
+                      setCustomDeckName('');
+                    }}
+                    style={{ fontSize: '10px', padding: '0 8px', borderRadius: '8px' }}
+                  >
+                    Voltar
+                  </button>
+                </div>
+              )}
+
+              <button className="qty-btn" type="submit" style={{ borderRadius: '8px', width: '38px', height: '38px', flexShrink: 0 }}>
+                <Plus size={16} />
+              </button>
+            </div>
           </div>
         </form>
 
@@ -750,7 +849,7 @@ export const TournamentsView: React.FC = () => {
             <div className="registered-players-list" style={{ maxHeight: '110px', overflowY: 'auto' }}>
               {playersList.map((player, idx) => (
                 <div key={idx} className="player-chip">
-                  <span>{player}</span>
+                  <span>{player}{playerDecks[player] ? ` (${playerDecks[player]})` : ''}</span>
                   <button type="button" onClick={() => handleRemovePlayer(idx)}>&times;</button>
                 </div>
               ))}

@@ -64,6 +64,7 @@ export interface Tournament {
   id: string;
   name: string;
   players: string[];
+  playerDecks?: Record<string, string>; // Maps player name -> deck name
   rounds: TournamentRound[];
   status: 'setup' | 'active' | 'finished';
   winner: string | null;
@@ -124,7 +125,7 @@ interface AppContextType {
 
   // Tournaments
   tournaments: Tournament[];
-  createTournament: (name: string, players: string[], mode?: 'single' | 'podium') => void;
+  createTournament: (name: string, players: string[], mode?: 'single' | 'podium', playerDecks?: Record<string, string>) => void;
   declareMatchWinner: (tournamentId: string, roundNumber: number, matchId: string, winnerName: string) => void;
   resetTournament: (tournamentId: string) => void;
   deleteTournament: (tournamentId: string) => void;
@@ -500,7 +501,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // --- Tournaments Functions ---
-  const createTournament = (name: string, players: string[], mode: 'single' | 'podium' = 'single') => {
+  const createTournament = (name: string, players: string[], mode: 'single' | 'podium' = 'single', playerDecks?: Record<string, string>) => {
     const count = players.length;
     let size = 4;
     if (count > 8) size = 16;
@@ -569,6 +570,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: `tour_${Date.now()}`,
       name: name || `Torneio de Duelos #${tournaments.length + 1}`,
       players: players.filter(p => p.trim() !== ''),
+      playerDecks,
       rounds,
       status: 'active',
       winner: null,
