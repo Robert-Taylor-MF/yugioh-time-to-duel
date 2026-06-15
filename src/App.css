@@ -60,6 +60,7 @@
 .app-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding-bottom: 75px; /* bottom navigation offset */
   display: flex;
   flex-direction: column;
@@ -248,9 +249,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   position: relative;
   z-index: 10;
+  flex-wrap: wrap;
 }
 
 .tool-btn {
@@ -270,6 +272,15 @@
 .tool-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: var(--gold-glow);
+}
+
+@media (max-width: 420px) {
+  .tool-btn span {
+    display: none;
+  }
+  .tool-btn {
+    padding: 8px 10px;
+  }
 }
 
 /* Calculator & Quick LP controls */
@@ -564,6 +575,12 @@
   padding: 10px 0;
   flex: 1;
   align-items: center;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.bracket-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .bracket-round {
@@ -689,10 +706,11 @@
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .ygo-card-item {
@@ -989,6 +1007,7 @@
   padding: 18px;
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .profile-card.premium-glow {
@@ -1005,6 +1024,7 @@
   position: relative;
   cursor: pointer;
   background: rgba(255,255,255,0.05);
+  flex-shrink: 0;
 }
 
 .premium-glow .avatar-wrapper {

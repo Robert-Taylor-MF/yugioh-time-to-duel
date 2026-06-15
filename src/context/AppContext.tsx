@@ -67,6 +67,10 @@ export interface Tournament {
   status: 'setup' | 'active' | 'finished';
   winner: string | null;
   createdAt: string;
+  mode: 'single' | 'podium';
+  thirdPlaceMatch?: TournamentMatch | null;
+  thirdPlaceWinner?: string | null;
+  secondPlace?: string | null;
 }
 
 export interface UserProfile {
@@ -118,7 +122,7 @@ interface AppContextType {
 
   // Tournaments
   tournaments: Tournament[];
-  createTournament: (name: string, players: string[]) => void;
+  createTournament: (name: string, players: string[], mode?: 'single' | 'podium') => void;
   declareMatchWinner: (tournamentId: string, roundNumber: number, matchId: string, winnerName: string) => void;
   resetTournament: (tournamentId: string) => void;
   deleteTournament: (tournamentId: string) => void;
@@ -491,7 +495,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // --- Tournaments Functions ---
-  const createTournament = (name: string, players: string[]) => {
+  const createTournament = (name: string, players: string[], mode: 'single' | 'podium' = 'single') => {
     const count = players.length;
     let size = 4;
     if (count > 8) size = 16;
@@ -563,7 +567,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       rounds,
       status: 'active',
       winner: null,
-      createdAt: new Date().toLocaleDateString()
+      createdAt: new Date().toLocaleDateString(),
+      mode,
+      thirdPlaceMatch: null,
+      thirdPlaceWinner: null,
+      secondPlace: null
     };
 
     setTournaments(prev => [...prev, newTournament]);
@@ -572,6 +580,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const declareMatchWinner = (tournamentId: string, roundNumber: number, matchId: string, winnerName: string) => {
     setTournaments(prev => prev.map(t => {
       if (t.id !== tournamentId) return t;
+
+      // Special case: 3rd place match
+      if (matchId === 'third_place') {
+        const isFinished = t.winner !== null;
+        return {
+          ...t,
+          thirdPlaceWinner: winnerName,
+          status: isFinished ? 'finished' : t.status
+        };
+      }
 
       const updatedRounds = t.rounds.map(round => {
         if (round.roundNumber !== roundNumber) return round;
@@ -585,15 +603,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
 
       const totalRounds = t.rounds.length;
-      let tournamentWinner: string | null = null;
+      let tournamentWinner: string | null = t.winner;
+      let secondPlace: string | null = t.secondPlace || null;
       let status = t.status;
+      let thirdPlaceMatch = t.thirdPlaceMatch || null;
+      let thirdPlaceWinner: string | null = t.thirdPlaceWinner || null;
 
       if (roundNumber === totalRounds) {
         tournamentWinner = winnerName;
-        status = 'finished';
+        
+        // Find second place (loser of final)
+        const finalMatch = t.rounds[totalRounds - 1].matches[0];
+        secondPlace = finalMatch.player1 === winnerName ? finalMatch.player2 : finalMatch.player1;
 
         if (winnerName.toLowerCase() === profile.name.toLowerCase() || winnerName.toLowerCase() === profile.nickname.toLowerCase()) {
           setProfile(p => ({ ...p, wins: p.wins + 1 }));
+        }
+
+        const needsThirdPlace = t.mode === 'podium' && thirdPlaceMatch;
+        const isThirdPlaceDecided = thirdPlaceWinner !== null && thirdPlaceWinner !== undefined;
+
+        if (!needsThirdPlace || isThirdPlaceDecided) {
+          status = 'finished';
         }
       } else {
         const nextRoundNum = roundNumber + 1;
@@ -615,13 +646,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             }
           }
         }
+
+        // If semi-finals finished, generate 3rd place match if in podium mode
+        if (t.mode === 'podium' && roundNumber === totalRounds - 1) {
+          const semiRound = updatedRounds.find(r => r.roundNumber === totalRounds - 1);
+          if (semiRound && semiRound.matches.every(m => m.winner)) {
+            const loser1 = semiRound.matches[0].player1 === semiRound.matches[0].winner ? semiRound.matches[0].player2 : semiRound.matches[0].player1;
+            const loser2 = semiRound.matches[1].player1 === semiRound.matches[1].winner ? semiRound.matches[1].player2 : semiRound.matches[1].player1;
+
+            let tpWinner: string | null = null;
+            if (loser1 === 'BYE' && loser2 === 'BYE') {
+              tpWinner = 'Ninguém';
+            } else if (loser1 === 'BYE') {
+              tpWinner = loser2;
+            } else if (loser2 === 'BYE') {
+              tpWinner = loser1;
+            }
+
+            thirdPlaceMatch = {
+              id: 'third_place',
+              player1: loser1,
+              player2: loser2,
+              winner: tpWinner
+            };
+
+            if (tpWinner) {
+              thirdPlaceWinner = tpWinner;
+            }
+          }
+        }
       }
 
       return {
         ...t,
         rounds: updatedRounds,
         status,
-        winner: tournamentWinner
+        winner: tournamentWinner,
+        secondPlace,
+        thirdPlaceMatch,
+        thirdPlaceWinner
       };
     }));
   };
@@ -693,7 +756,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ...t,
         rounds,
         status: 'active',
-        winner: null
+        winner: null,
+        thirdPlaceMatch: null,
+        thirdPlaceWinner: null,
+        secondPlace: null
       };
     }));
   };

@@ -152,37 +152,73 @@ export const DuelView: React.FC = () => {
       </div>
 
       {/* Toolbar */}
-      <div className="duel-toolbar no-print">
-        <div style={{ display: 'flex', gap: '6px' }}>
-          <button className="tool-btn" onClick={() => setShowCoin(true)} aria-label="Lançar Moeda">
-            <Coins size={15} /> Moeda
-          </button>
-          <button className="tool-btn" onClick={() => setShowDice(true)} aria-label="Rolar Dado">
-            <Dice5 size={15} /> Dado
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', gap: '6px' }}>
-          <button className="tool-btn" onClick={() => setSoundEnabled(prev => !prev)} aria-label="Alternar Som">
-            {soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
-          </button>
-          <button className="tool-btn" onClick={() => setIsEditingNames(true)} aria-label="Editar Nomes">
-            <Edit3 size={15} /> Nomes
-          </button>
-          <button className="tool-btn" onClick={undoLastAction} aria-label="Desfazer">
-            <Undo2 size={15} /> Desfazer
-          </button>
-          <button
-            className="tool-btn"
-            onClick={() => {
-              playBeep();
-              setShowResetConfirm(true);
-            }}
-            aria-label="Reiniciar"
-          >
-            <RotateCcw size={15} /> Reset
-          </button>
-        </div>
+      <div className="duel-toolbar no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px', padding: '8px 12px' }}>
+        <button 
+          className="tool-btn" 
+          onClick={() => setShowCoin(true)} 
+          aria-label="Lançar Moeda" 
+          title="Lançar Moeda"
+          style={{ flex: 1, height: '36px', padding: 0, justifyContent: 'center', borderRadius: '8px' }}
+        >
+          <Coins size={16} />
+        </button>
+        <button 
+          className="tool-btn" 
+          onClick={() => setShowDice(true)} 
+          aria-label="Rolar Dado" 
+          title="Rolar Dado"
+          style={{ flex: 1, height: '36px', padding: 0, justifyContent: 'center', borderRadius: '8px' }}
+        >
+          <Dice5 size={16} />
+        </button>
+        <button 
+          className="tool-btn" 
+          onClick={() => setSoundEnabled(prev => !prev)} 
+          aria-label="Alternar Som" 
+          title="Alternar Som"
+          style={{ flex: 1, height: '36px', padding: 0, justifyContent: 'center', borderRadius: '8px' }}
+        >
+          {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+        </button>
+        <button 
+          className="tool-btn" 
+          onClick={() => setIsEditingNames(true)} 
+          aria-label="Editar Nomes" 
+          title="Editar Nomes"
+          style={{ flex: 1, height: '36px', padding: 0, justifyContent: 'center', borderRadius: '8px' }}
+        >
+          <Edit3 size={16} />
+        </button>
+        <button 
+          className="tool-btn" 
+          onClick={undoLastAction} 
+          aria-label="Desfazer" 
+          title="Desfazer"
+          style={{ flex: 1, height: '36px', padding: 0, justifyContent: 'center', borderRadius: '8px' }}
+        >
+          <Undo2 size={16} />
+        </button>
+        <button
+          className="tool-btn reset-btn"
+          onClick={() => {
+            playBeep();
+            setShowResetConfirm(true);
+          }}
+          aria-label="Reiniciar"
+          title="Reiniciar"
+          style={{ 
+            flex: 1, 
+            height: '36px', 
+            padding: 0, 
+            justifyContent: 'center', 
+            borderRadius: '8px', 
+            background: 'rgba(255, 75, 75, 0.08)', 
+            border: '1px solid rgba(255, 75, 75, 0.25)', 
+            color: '#ff4b4b' 
+          }}
+        >
+          <RotateCcw size={16} />
+        </button>
       </div>
 
       {/* Input Display Bar */}

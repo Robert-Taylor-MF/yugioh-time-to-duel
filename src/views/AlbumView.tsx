@@ -249,13 +249,13 @@ export const AlbumView: React.FC = () => {
           </div>
 
           {/* Collection Stats Header */}
-          <div className="no-print" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', display: 'flex', justifyContent: 'space-between', padding: '0 4px', marginBottom: '8px' }}>
+          <div className="no-print" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px', padding: '0 4px', marginBottom: '8px' }}>
             <span>Cartas filtradas: {filteredCards.length}</span>
-            <span>Total no álbum: {collection.reduce((sum, item) => sum + item.quantity, 0)} possuídas / {collection.reduce((sum, item) => sum + (item.wanted || 0), 0)} desejadas</span>
+            <span>Total: {collection.reduce((sum, item) => sum + item.quantity, 0)} possuídas / {collection.reduce((sum, item) => sum + (item.wanted || 0), 0)} desejadas</span>
           </div>
 
           {/* Cards Catalog Grid */}
-          <div className="card-grid no-print" style={{ gridTemplateColumns: '1fr', gap: '12px' }}>
+          <div className="card-grid no-print" style={{ gridTemplateColumns: 'minmax(0, 1fr)', gap: '12px' }}>
             {visibleCards.length === 0 ? (
               <div style={{ gridColumn: '1', textAlign: 'center', color: 'rgba(255,255,255,0.2)', padding: '40px 0', fontSize: '13px' }}>
                 Nenhuma carta encontrada para os filtros selecionados.
@@ -277,6 +277,7 @@ export const AlbumView: React.FC = () => {
                     className={`ygo-card-item ${typeClass}`} 
                     style={{ 
                       display: 'flex', 
+                      flexDirection: 'row',
                       gap: '12px', 
                       padding: '10px', 
                       position: 'relative',
@@ -334,7 +335,7 @@ export const AlbumView: React.FC = () => {
 
                     {/* Detalhes da Carta */}
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0 }} onClick={(e) => e.stopPropagation()}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                         <span 
                           className="card-title-text" 
                           style={{ 
@@ -344,7 +345,9 @@ export const AlbumView: React.FC = () => {
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            flex: 1,
+                            minWidth: 0
                           }}
                           onClick={() => setSelectedCardDetail(card)}
                           title="Clique para ver detalhes"
@@ -352,44 +355,61 @@ export const AlbumView: React.FC = () => {
                           {card.name}
                         </span>
                         
-                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
                           {/* Folder Plus button */}
                           <button 
-                            onClick={() => setAddingCardToAlbum(card)}
-                            style={{ background: 'none', border: 'none', padding: '2px', cursor: 'pointer', color: 'rgba(255,255,255,0.3)' }}
+                            onClick={(e) => { e.stopPropagation(); setAddingCardToAlbum(card); }}
+                            style={{ 
+                              background: 'rgba(255, 255, 255, 0.04)', 
+                              border: '1px solid rgba(255, 255, 255, 0.08)', 
+                              padding: '4px', 
+                              borderRadius: '4px',
+                              cursor: 'pointer', 
+                              color: 'rgba(255,255,255,0.6)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.2s'
+                            }}
                             title="Organizar em Álbum"
                           >
-                            <FolderPlus size={13} />
+                            <FolderPlus size={14} />
                           </button>
 
                           {/* Botão Favorito */}
                           <button 
-                            onClick={() => toggleFavorite(card.id)} 
+                            onClick={(e) => { e.stopPropagation(); toggleFavorite(card.id); }} 
                             style={{ 
-                              background: 'none', 
-                              border: 'none', 
-                              padding: '2px', 
+                              background: 'rgba(255, 255, 255, 0.04)', 
+                              border: '1px solid rgba(255, 255, 255, 0.08)', 
+                              padding: '4px', 
+                              borderRadius: '4px',
                               cursor: 'pointer', 
                               display: 'flex', 
-                              color: isFav ? 'var(--gold)' : 'rgba(255,255,255,0.2)',
-                              transition: 'transform 0.2s'
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: isFav ? 'var(--gold)' : 'rgba(255,255,255,0.3)',
+                              transition: 'all 0.2s'
                             }}
+                            title="Favoritar"
                           >
-                            <Star size={13} fill={isFav ? 'var(--gold)' : 'none'} />
+                            <Star size={14} fill={isFav ? 'var(--gold)' : 'none'} />
                           </button>
                         </div>
                       </div>
                       
-                      <div className="card-meta-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'rgba(255,255,255,0.4)', marginTop: '-2px' }}>
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{card.originalType} • {card.subType}</span>
-                        <span className="rarity-text" style={{ color: 'var(--gold)', fontWeight: '600', flexShrink: 0 }}>
+                      <div className="card-meta-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'rgba(255,255,255,0.4)', marginTop: '-2px', minWidth: 0 }}>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0, display: 'block' }}>
+                          {card.originalType} • {card.subType}
+                        </span>
+                        <span className="rarity-text" style={{ color: 'var(--gold)', fontWeight: '600', flexShrink: 0, marginLeft: '6px' }}>
                           {card.rarity.replace(/Rare/g, 'R.')}
                         </span>
                       </div>
 
                       {/* Atributos Especiais de Monstro */}
                       {(card.type === 'Monster' || card.type === 'Extra') && card.atk !== undefined && (
-                        <div style={{ display: 'flex', gap: '8px', fontSize: '9px', fontWeight: 'bold', color: 'rgba(255,255,255,0.7)', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: '6px', fontSize: '9px', fontWeight: 'bold', color: 'rgba(255,255,255,0.7)', alignItems: 'center', flexWrap: 'wrap' }}>
                           {card.attribute && <span className="attribute-tag" style={{ background: 'rgba(255,255,255,0.05)', padding: '1px 4px', borderRadius: '3px', fontSize: '8px', color: '#ffb300' }}>{card.attribute}</span>}
                           <span>LV/RK {card.level}</span>
                           <span style={{ marginLeft: 'auto' }}>ATK {card.atk}</span>
@@ -400,25 +420,29 @@ export const AlbumView: React.FC = () => {
                       {/* Efeito/Lore */}
                       <p 
                         style={{ 
-                          fontSize: '11px', 
-                          color: 'rgba(255,255,255,0.75)', 
+                          fontSize: '12px', 
+                          color: 'rgba(255, 255, 255, 0.85)', 
                           overflow: 'hidden', 
                           display: '-webkit-box', 
                           WebkitLineClamp: 3, 
                           WebkitBoxOrient: 'vertical', 
-                          lineHeight: '1.4', 
-                          margin: '2px 0 6px 0' 
+                          lineHeight: '1.5', 
+                          margin: '4px 0 8px 0',
+                          fontFamily: 'var(--font-main)'
                         }}
                       >
                         {card.description}
                       </p>
 
+                      {/* Coleção (Texto Opcional) */}
+                      {card.collection && (
+                        <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.25)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: '100%', marginBottom: '2px' }}>
+                          Coleção: {card.collection}
+                        </div>
+                      )}
+
                       {/* Controles de Coleção */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
-                        <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.25)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80px' }}>
-                          {card.collection}
-                        </span>
-                        
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: 'auto', paddingTop: '4px' }}>
                         <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                           {/* Seletor Tenho */}
                           <div 
@@ -646,7 +670,7 @@ export const AlbumView: React.FC = () => {
                         <div 
                           key={cardId}
                           className={`ygo-card-item ${typeClass}`}
-                          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px' }}
+                          style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px' }}
                           onClick={() => setSelectedCardDetail(card)}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
