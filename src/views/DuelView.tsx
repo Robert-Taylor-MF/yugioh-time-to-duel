@@ -202,7 +202,7 @@ export const DuelView: React.FC = () => {
               className="premium-btn-hover"
               title={`Ver Deck: ${favoriteDeck.name}`}
             >
-              📦 {favoriteDeck.name.substring(0, 12)}{favoriteDeck.name.length > 12 ? '...' : ''} ({favoriteDeck.mainDeck.length})
+              <DeckBoxIcon size={12} /> {favoriteDeck.name.substring(0, 12)}{favoriteDeck.name.length > 12 ? '...' : ''} ({favoriteDeck.mainDeck.length})
             </button>
           ) : (
             <button
@@ -227,7 +227,7 @@ export const DuelView: React.FC = () => {
                 gap: '4px'
               }}
             >
-              📦 Sem Deck
+              <DeckBoxIcon size={12} /> Sem Deck
             </button>
           )}
         </div>
@@ -604,7 +604,7 @@ export const DuelView: React.FC = () => {
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '10px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '24px' }}>📦</span>
+                <DeckBoxIcon size={24} style={{ color: 'var(--gold)' }} />
                 <div>
                   <h3 style={{ color: 'var(--gold)', fontSize: '15px', fontWeight: '900', margin: 0 }}>
                     {favoriteDeck.name}
@@ -887,3 +887,38 @@ export const DuelView: React.FC = () => {
     </div>
   );
 };
+
+const DeckBoxIcon: React.FC<{ size?: number; className?: string; style?: React.CSSProperties }> = ({ size = 16, className, style }) => (
+  <svg 
+    viewBox="0 0 24 24" 
+    width={size} 
+    height={size} 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="1.8" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    className={className}
+    style={style}
+  >
+    {/* Lid Top Face */}
+    <polygon points="12,3 18,6 12,9 6,6" fill="currentColor" fillOpacity="0.15" />
+    
+    {/* Left vertical edge */}
+    <line x1="6" y1="6" x2="6" y2="20" />
+    
+    {/* Center vertical edge */}
+    <line x1="12" y1="9" x2="12" y2="22" />
+    
+    {/* Right vertical edge */}
+    <line x1="18" y1="6" x2="18" y2="20" />
+    
+    {/* Bottom edges */}
+    <line x1="6" y1="20" x2="12" y2="22" />
+    <line x1="12" y1="22" x2="18" y2="20" />
+    
+    {/* Lid bottom seam lines (Iconic angled cut) */}
+    <line x1="6" y1="11" x2="12" y2="14" />
+    <line x1="12" y1="14" x2="18" y2="8" />
+  </svg>
+);
