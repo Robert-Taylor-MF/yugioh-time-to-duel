@@ -14,7 +14,10 @@ import {
   BookOpen, 
   Wand2, 
   Sparkles,
-  ClipboardList
+  ClipboardList,
+  Share2,
+  Download,
+  Upload
 } from 'lucide-react';
 import { type Card } from '../data/defaultCards';
 
@@ -221,6 +224,13 @@ export const DecksView: React.FC = () => {
   const [comboSelectedCards, setComboSelectedCards] = useState<string[]>([]);
   const [editingComboId, setEditingComboId] = useState<string | null>(null);
 
+  // Export/Import states
+  const [showExportModal, setShowExportModal] = useState<Deck | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importCodeInput, setImportCodeInput] = useState('');
+  const [importError, setImportError] = useState<string | null>(null);
+  const [copiedNotification, setCopiedNotification] = useState(false);
+
   // Find active deck
   const activeDeck = decks.find(d => d.id === activeDeckId);
 
@@ -410,6 +420,106 @@ export const DecksView: React.FC = () => {
       currentCombos.filter(c => c.id !== comboId), 
       activeDeck.strategies
     );
+  };
+
+  // --- Export / Import Handlers ---
+  const handleExportJSON = (deck: Deck) => {
+    const exportData = {
+      name: deck.name,
+      mainDeck: deck.mainDeck,
+      extraDeck: deck.extraDeck,
+      sideDeck: deck.sideDeck,
+      combos: deck.combos || [],
+      strategies: deck.strategies || '',
+      coverCardId: deck.coverCardId
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${deck.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_deck.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setShowExportModal(null);
+  };
+
+  const handleCopyShareCode = (deck: Deck) => {
+    const exportData = {
+      name: deck.name,
+      mainDeck: deck.mainDeck,
+      extraDeck: deck.extraDeck,
+      sideDeck: deck.sideDeck,
+      combos: deck.combos || [],
+      strategies: deck.strategies || '',
+      coverCardId: deck.coverCardId
+    };
+    try {
+      const jsonStr = JSON.stringify(exportData);
+      const base64Str = btoa(unescape(encodeURIComponent(jsonStr)));
+      navigator.clipboard.writeText(base64Str);
+      setCopiedNotification(true);
+      setTimeout(() => setCopiedNotification(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy share code', err);
+    }
+  };
+
+  const handleImportFromFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportError(null);
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        const data = JSON.parse(text);
+        executeImport(data);
+      } catch (err) {
+        setImportError('Erro ao ler arquivo: formato JSON inválido.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleImportFromCode = () => {
+    if (!importCodeInput.trim()) return;
+    setImportError(null);
+    try {
+      const decodedStr = decodeURIComponent(escape(atob(importCodeInput.trim())));
+      const data = JSON.parse(decodedStr);
+      executeImport(data);
+    } catch (err) {
+      setImportError('Erro ao ler código: Código de compartilhamento inválido ou corrompido.');
+    }
+  };
+
+  const executeImport = (data: any) => {
+    if (!data || typeof data !== 'object') {
+      setImportError('Dados inválidos.');
+      return;
+    }
+    const name = typeof data.name === 'string' ? data.name : 'Deck Importado';
+    const mainDeck = Array.isArray(data.mainDeck) ? data.mainDeck.map(String) : [];
+    const extraDeck = Array.isArray(data.extraDeck) ? data.extraDeck.map(String) : [];
+    const sideDeck = Array.isArray(data.sideDeck) ? data.sideDeck.map(String) : [];
+    const combos = Array.isArray(data.combos) ? data.combos.map((c: any) => ({
+      id: c.id || `combo_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      name: typeof c.name === 'string' ? c.name : 'Combo Sem Nome',
+      cardIds: Array.isArray(c.cardIds) ? c.cardIds.map(String) : [],
+      steps: typeof c.steps === 'string' ? c.steps : ''
+    })) : [];
+    const strategies = typeof data.strategies === 'string' ? data.strategies : '';
+    const coverCardId = typeof data.coverCardId === 'string' ? data.coverCardId : null;
+
+    const newDeck = createDeck(name);
+    updateDeck(newDeck.id, mainDeck, extraDeck, sideDeck, combos, strategies, coverCardId);
+
+    setImportCodeInput('');
+    setImportError(null);
+    setShowImportModal(false);
   };
 
   // Selector filtering
@@ -1163,9 +1273,14 @@ export const DecksView: React.FC = () => {
     <div className="decks-container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#fff' }}>Meus Decks</h2>
-        <button className="tool-btn" onClick={handleCreateNew}>
-          <PlusCircle size={15} /> Novo Deck
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className="tool-btn" onClick={() => { setShowImportModal(true); setImportError(null); setImportCodeInput(''); }} title="Importar deck por arquivo JSON ou código">
+            <Upload size={13} /> Importar
+          </button>
+          <button className="tool-btn" onClick={handleCreateNew}>
+            <PlusCircle size={15} /> Novo Deck
+          </button>
+        </div>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -1205,6 +1320,14 @@ export const DecksView: React.FC = () => {
 
               {/* Action Buttons */}
               <div style={{ display: 'flex', gap: '8px', marginLeft: '10px' }} onClick={(e) => e.stopPropagation()}>
+                <button
+                  className="qty-btn"
+                  onClick={() => setShowExportModal(deck)}
+                  title="Compartilhar / Exportar"
+                  style={{ color: '#60a5fa' }}
+                >
+                  <Share2 size={12} />
+                </button>
                 <button
                   className="qty-btn"
                   onClick={() => handleStartRename(deck)}
@@ -1290,6 +1413,156 @@ export const DecksView: React.FC = () => {
                 }}
               >
                 Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Export Deck Modal */}
+      {showExportModal && (
+        <div className="standard-modal-overlay no-print" onClick={() => setShowExportModal(null)}>
+          <div className="standard-modal" style={{ maxWidth: '340px', width: '95%' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ color: 'var(--gold)', fontSize: '15px', fontWeight: '800', margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Share2 size={16} /> Compartilhar Deck
+            </h3>
+            
+            <p style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', lineHeight: '1.4', marginBottom: '14px' }}>
+              Escolha como deseja compartilhar o deck <strong>"{showExportModal.name}"</strong> com seus amigos:
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+              <button 
+                className="btn-premium" 
+                onClick={() => handleCopyShareCode(showExportModal)}
+                style={{ 
+                  fontSize: '11px', 
+                  padding: '10px 14px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '8px' 
+                }}
+              >
+                {copiedNotification ? (
+                  <>✓ Código Copiado!</>
+                ) : (
+                  <>
+                    <ClipboardList size={14} /> Copiar Código de Compartilhamento
+                  </>
+                )}
+              </button>
+              
+              <button 
+                className="btn-secondary" 
+                onClick={() => handleExportJSON(showExportModal)}
+                style={{ 
+                  fontSize: '11px', 
+                  padding: '10px 14px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '8px' 
+                }}
+              >
+                <Download size={14} style={{ color: 'var(--gold)' }} /> Baixar Arquivo (.json)
+              </button>
+            </div>
+
+            <p style={{ fontSize: '9px', color: 'rgba(255, 255, 255, 0.4)', textAlign: 'center', margin: '0 0 14px 0' }}>
+              Ao copiar o código, você pode enviá-lo pelo WhatsApp ou Discord. Seus amigos só precisam importá-lo colando o texto!
+            </p>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn-secondary" onClick={() => setShowExportModal(null)} style={{ fontSize: '11px', padding: '6px 12px' }}>
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import Deck Modal */}
+      {showImportModal && (
+        <div className="standard-modal-overlay no-print" onClick={() => setShowImportModal(false)}>
+          <div className="standard-modal" style={{ maxWidth: '360px', width: '95%' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ color: 'var(--gold)', fontSize: '15px', fontWeight: '800', margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Upload size={16} /> Importar Deck
+            </h3>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* Option A: File upload */}
+              <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px' }}>
+                <label style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.5)', display: 'block', marginBottom: '6px', fontWeight: '700' }}>
+                  OPÇÃO A: IMPORTAR ARQUIVO DECK.JSON
+                </label>
+                <input 
+                  type="file" 
+                  accept=".json" 
+                  onChange={handleImportFromFile}
+                  style={{ display: 'none' }}
+                  id="deck-file-import-input"
+                />
+                <label 
+                  htmlFor="deck-file-import-input" 
+                  className="btn-secondary"
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: '8px', 
+                    padding: '8px 12px', 
+                    fontSize: '11px', 
+                    cursor: 'pointer',
+                    borderRadius: '6px',
+                    border: '1px dashed var(--gold)',
+                    background: 'rgba(212, 175, 55, 0.04)'
+                  }}
+                >
+                  <Download size={14} style={{ color: 'var(--gold)' }} /> Escolher arquivo .json
+                </label>
+              </div>
+
+              {/* Option B: Share code */}
+              <div>
+                <label style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.5)', display: 'block', marginBottom: '6px', fontWeight: '700' }}>
+                  OPÇÃO B: IMPORTAR POR CÓDIGO
+                </label>
+                <textarea
+                  className="textbox"
+                  placeholder="Cole o código de compartilhamento recebido aqui..."
+                  value={importCodeInput}
+                  onChange={e => { setImportCodeInput(e.target.value); setImportError(null); }}
+                  style={{ minHeight: '80px', fontSize: '10px', resize: 'vertical', lineHeight: '1.4', fontFamily: 'monospace' }}
+                />
+                <button
+                  className="btn-premium"
+                  onClick={handleImportFromCode}
+                  disabled={!importCodeInput.trim()}
+                  style={{ width: '100%', fontSize: '11px', padding: '8px 12px', marginTop: '6px' }}
+                >
+                  Confirmar Importação por Código
+                </button>
+              </div>
+
+              {importError && (
+                <div style={{ color: 'var(--red)', fontSize: '10px', textAlign: 'center', marginTop: '4px' }}>
+                  ⚠️ {importError}
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '14px' }}>
+              <button 
+                className="btn-secondary" 
+                onClick={() => {
+                  setShowImportModal(false);
+                  setImportCodeInput('');
+                  setImportError(null);
+                }} 
+                style={{ fontSize: '11px', padding: '6px 12px' }}
+              >
+                Cancelar
               </button>
             </div>
           </div>
