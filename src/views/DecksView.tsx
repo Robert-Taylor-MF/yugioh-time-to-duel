@@ -14,8 +14,7 @@ import {
   BookOpen, 
   Wand2, 
   Sparkles,
-  ClipboardList,
-  Image as ImageIcon
+  ClipboardList
 } from 'lucide-react';
 import { type Card } from '../data/defaultCards';
 
@@ -77,6 +76,109 @@ const DeckBox: React.FC<DeckBoxProps> = ({ card, onClick, size = 'md' }) => {
         pointerEvents: 'none',
         zIndex: 1
       }} />
+    </div>
+  );
+};
+
+interface EditorCardThumbnailProps {
+  card: Card;
+  isCover: boolean;
+  onView: () => void;
+  onRemove: () => void;
+  onSetCover: () => void;
+}
+
+const EditorCardThumbnail: React.FC<EditorCardThumbnailProps> = ({
+  card,
+  isCover,
+  onView,
+  onRemove,
+  onSetCover
+}) => {
+  return (
+    <div 
+      style={{
+        width: '54px',
+        height: '78px',
+        position: 'relative',
+        cursor: 'pointer',
+        borderRadius: '4px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+        transition: 'transform 0.15s ease',
+        margin: '4px',
+        flexShrink: 0
+      }}
+      className="editor-card-thumbnail"
+    >
+      <img
+        src={card.imageUrlSmall || card.imageUrl}
+        alt={card.name}
+        onClick={onView}
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          borderRadius: '3px',
+          border: isCover ? '2px solid var(--gold)' : '1px solid rgba(255,255,255,0.1)'
+        }}
+        title={`${card.name} (Clique para ver detalhes)`}
+      />
+
+      {/* Set Cover Star Overlay */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onSetCover(); }}
+        style={{
+          position: 'absolute',
+          top: '-5px',
+          left: '-5px',
+          background: isCover ? 'var(--gold)' : 'rgba(0, 0, 0, 0.75)',
+          border: '1px solid rgba(255,255,255,0.25)',
+          color: isCover ? '#000' : 'rgba(255, 255, 255, 0.7)',
+          borderRadius: '50%',
+          width: '16px',
+          height: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          fontSize: '9px',
+          fontWeight: 'bold',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.5)',
+          zIndex: 5,
+          padding: 0
+        }}
+        title={isCover ? "Capa do deck ativa" : "Definir como capa"}
+      >
+        ★
+      </button>
+
+      {/* Remove Overlay */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onRemove(); }}
+        style={{
+          position: 'absolute',
+          top: '-5px',
+          right: '-5px',
+          background: 'rgba(255, 56, 96, 0.95)',
+          border: '1px solid rgba(255,255,255,0.25)',
+          color: '#fff',
+          borderRadius: '50%',
+          width: '16px',
+          height: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          fontSize: '8px',
+          fontWeight: 'bold',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.5)',
+          zIndex: 5,
+          padding: 0
+        }}
+        title="Remover do deck"
+      >
+        ✕
+      </button>
     </div>
   );
 };
@@ -404,48 +506,19 @@ export const DecksView: React.FC = () => {
                   Nenhuma carta. Clique em Adicionar.
                 </div>
               ) : (
-                <div className="deck-editor-cards-grid">
+                <div className="deck-editor-cards-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '8px' }}>
                   {activeDeck.mainDeck.map((cardId, index) => {
                     const card = allCards.find(c => c.id === cardId);
+                    if (!card) return null;
                     return (
-                      <div
+                      <EditorCardThumbnail
                         key={`${cardId}_${index}`}
-                        className="editor-card-tag"
-                        style={{ cursor: 'default', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}
-                      >
-                        <span 
-                          onClick={() => card && setSelectedCardDetail(card)} 
-                          style={{ cursor: 'pointer', flex: 1, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textDecoration: 'underline' }}
-                          title="Clique para ver efeito"
-                        >
-                          {card?.name || 'Carta'}
-                        </span>
-                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                          <button
-                            onClick={() => updateDeck(activeDeck.id, activeDeck.mainDeck, activeDeck.extraDeck, activeDeck.sideDeck, activeDeck.combos, activeDeck.strategies, cardId)}
-                            style={{ 
-                              background: 'none', 
-                              border: 'none', 
-                              color: activeDeck.coverCardId === cardId ? 'var(--gold)' : 'rgba(255,255,255,0.25)', 
-                              cursor: 'pointer', 
-                              fontSize: '10px', 
-                              padding: '0 2px',
-                              display: 'flex',
-                              alignItems: 'center'
-                            }}
-                            title="Definir como capa do deck"
-                          >
-                            <ImageIcon size={11} style={{ color: activeDeck.coverCardId === cardId ? 'var(--gold)' : 'inherit' }} />
-                          </button>
-                          <button 
-                            onClick={() => removeCardFromDeck(cardId, 'main')}
-                            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '9px', padding: '0 2px' }}
-                            title="Remover"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      </div>
+                        card={card}
+                        isCover={activeDeck.coverCardId === cardId}
+                        onView={() => setSelectedCardDetail(card)}
+                        onRemove={() => removeCardFromDeck(cardId, 'main')}
+                        onSetCover={() => updateDeck(activeDeck.id, activeDeck.mainDeck, activeDeck.extraDeck, activeDeck.sideDeck, activeDeck.combos, activeDeck.strategies, cardId)}
+                      />
                     );
                   })}
                 </div>
@@ -463,48 +536,19 @@ export const DecksView: React.FC = () => {
                   Nenhum monstro extra.
                 </div>
               ) : (
-                <div className="deck-editor-cards-grid">
+                <div className="deck-editor-cards-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '8px' }}>
                   {activeDeck.extraDeck.map((cardId, index) => {
                     const card = allCards.find(c => c.id === cardId);
+                    if (!card) return null;
                     return (
-                      <div
+                      <EditorCardThumbnail
                         key={`${cardId}_${index}`}
-                        className="editor-card-tag"
-                        style={{ cursor: 'default', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px', borderColor: 'var(--extra-color)' }}
-                      >
-                        <span 
-                          onClick={() => card && setSelectedCardDetail(card)} 
-                          style={{ cursor: 'pointer', flex: 1, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textDecoration: 'underline' }}
-                          title="Clique para ver efeito"
-                        >
-                          {card?.name || 'Carta Extra'}
-                        </span>
-                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                          <button
-                            onClick={() => updateDeck(activeDeck.id, activeDeck.mainDeck, activeDeck.extraDeck, activeDeck.sideDeck, activeDeck.combos, activeDeck.strategies, cardId)}
-                            style={{ 
-                              background: 'none', 
-                              border: 'none', 
-                              color: activeDeck.coverCardId === cardId ? 'var(--gold)' : 'rgba(255,255,255,0.25)', 
-                              cursor: 'pointer', 
-                              fontSize: '10px', 
-                              padding: '0 2px',
-                              display: 'flex',
-                              alignItems: 'center'
-                            }}
-                            title="Definir como capa do deck"
-                          >
-                            <ImageIcon size={11} style={{ color: activeDeck.coverCardId === cardId ? 'var(--gold)' : 'inherit' }} />
-                          </button>
-                          <button 
-                            onClick={() => removeCardFromDeck(cardId, 'extra')}
-                            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '9px', padding: '0 2px' }}
-                            title="Remover"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      </div>
+                        card={card}
+                        isCover={activeDeck.coverCardId === cardId}
+                        onView={() => setSelectedCardDetail(card)}
+                        onRemove={() => removeCardFromDeck(cardId, 'extra')}
+                        onSetCover={() => updateDeck(activeDeck.id, activeDeck.mainDeck, activeDeck.extraDeck, activeDeck.sideDeck, activeDeck.combos, activeDeck.strategies, cardId)}
+                      />
                     );
                   })}
                 </div>
@@ -522,48 +566,19 @@ export const DecksView: React.FC = () => {
                   Nenhuma carta de suporte lateral.
                 </div>
               ) : (
-                <div className="deck-editor-cards-grid">
+                <div className="deck-editor-cards-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '8px' }}>
                   {activeDeck.sideDeck.map((cardId, index) => {
                     const card = allCards.find(c => c.id === cardId);
+                    if (!card) return null;
                     return (
-                      <div
+                      <EditorCardThumbnail
                         key={`${cardId}_${index}`}
-                        className="editor-card-tag"
-                        style={{ cursor: 'default', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}
-                      >
-                        <span 
-                          onClick={() => card && setSelectedCardDetail(card)} 
-                          style={{ cursor: 'pointer', flex: 1, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textDecoration: 'underline' }}
-                          title="Clique para ver efeito"
-                        >
-                          {card?.name || 'Carta Side'}
-                        </span>
-                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                          <button
-                            onClick={() => updateDeck(activeDeck.id, activeDeck.mainDeck, activeDeck.extraDeck, activeDeck.sideDeck, activeDeck.combos, activeDeck.strategies, cardId)}
-                            style={{ 
-                              background: 'none', 
-                              border: 'none', 
-                              color: activeDeck.coverCardId === cardId ? 'var(--gold)' : 'rgba(255,255,255,0.25)', 
-                              cursor: 'pointer', 
-                              fontSize: '10px', 
-                              padding: '0 2px',
-                              display: 'flex',
-                              alignItems: 'center'
-                            }}
-                            title="Definir como capa do deck"
-                          >
-                            <ImageIcon size={11} style={{ color: activeDeck.coverCardId === cardId ? 'var(--gold)' : 'inherit' }} />
-                          </button>
-                          <button 
-                            onClick={() => removeCardFromDeck(cardId, 'side')}
-                            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '9px', padding: '0 2px' }}
-                            title="Remover"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      </div>
+                        card={card}
+                        isCover={activeDeck.coverCardId === cardId}
+                        onView={() => setSelectedCardDetail(card)}
+                        onRemove={() => removeCardFromDeck(cardId, 'side')}
+                        onSetCover={() => updateDeck(activeDeck.id, activeDeck.mainDeck, activeDeck.extraDeck, activeDeck.sideDeck, activeDeck.combos, activeDeck.strategies, cardId)}
+                      />
                     );
                   })}
                 </div>
