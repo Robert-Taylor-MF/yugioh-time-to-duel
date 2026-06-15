@@ -3,7 +3,6 @@ import { useApp, type Deck, type DeckCombo } from '../context/AppContext';
 import { CardDetailModal } from '../components/CardDetailModal';
 import { 
   Plus, 
-  PlusCircle, 
   Trash2, 
   Edit2, 
   ArrowLeft, 
@@ -1468,16 +1467,8 @@ export const DecksView: React.FC = () => {
   // Render List of Decks
   return (
     <div className="decks-container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
         <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#fff' }}>Meus Decks</h2>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button className="tool-btn" onClick={() => { setShowImportModal(true); setImportError(null); setImportCodeInput(''); }} title="Importar deck por arquivo JSON ou código">
-            <Upload size={13} /> Importar
-          </button>
-          <button className="tool-btn" onClick={handleCreateNew}>
-            <PlusCircle size={15} /> Novo Deck
-          </button>
-        </div>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -1815,6 +1806,60 @@ export const DecksView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Floating Action Buttons */}
+      <div 
+        className="no-print"
+        style={{
+          position: 'absolute',
+          bottom: '80px',
+          right: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          zIndex: 99
+        }}
+      >
+        <button 
+          onClick={() => { setShowImportModal(true); setImportError(null); setImportCodeInput(''); }}
+          title="Importar Deck"
+          style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            background: 'var(--bg-lighter)',
+            border: '1px solid var(--gold)',
+            boxShadow: '0 4px 10px rgba(0,0,0,0.5), 0 0 6px var(--gold-glow)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--gold)',
+            cursor: 'pointer'
+          }}
+        >
+          <Upload size={16} />
+        </button>
+
+        <button 
+          onClick={handleCreateNew}
+          title="Novo Deck"
+          style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '50%',
+            background: 'var(--gold)',
+            border: 'none',
+            boxShadow: '0 5px 12px rgba(0,0,0,0.5), 0 0 8px var(--gold-glow)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#000',
+            cursor: 'pointer'
+          }}
+        >
+          <Plus size={22} strokeWidth={2.5} />
+        </button>
+      </div>
     </div>
   );
 };

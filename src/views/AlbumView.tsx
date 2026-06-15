@@ -132,16 +132,8 @@ export const AlbumView: React.FC = () => {
   return (
     <div className="album-container">
       {/* Top Header Controls */}
-      <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#fff' }}>Organizar Cartas</h2>
-        <div style={{ display: 'flex', gap: '6px' }}>
-          <button className="tool-btn" onClick={handleExportData} title="Exportar JSON">
-            <Download size={15} /> Backup
-          </button>
-          <button className="tool-btn" onClick={handlePrint} title="Imprimir Coleção">
-            <Printer size={15} /> PDF
-          </button>
-        </div>
+      <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#fff' }}>Coleção de Cartas</h2>
       </div>
 
       {/* Main Catalog vs My Albums Tabs */}
@@ -706,6 +698,33 @@ export const AlbumView: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* Bottom Control Bar */}
+      <div 
+        className="no-print" 
+        style={{ 
+          display: 'flex', 
+          gap: '8px', 
+          marginTop: '16px', 
+          borderTop: '1px solid rgba(255,255,255,0.06)', 
+          paddingTop: '12px' 
+        }}
+      >
+        <button 
+          className="btn-premium" 
+          onClick={handleExportData} 
+          style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '11px', padding: '8px 12px' }}
+        >
+          <Download size={13} /> Exportar Backup
+        </button>
+        <button 
+          className="btn-premium" 
+          onClick={handlePrint} 
+          style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '11px', padding: '8px 12px', background: 'linear-gradient(135deg, #1f2937 0%, #111827 100%)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+        >
+          <Printer size={13} /> Gerar PDF / Imprimir
+        </button>
+      </div>
 
       {/* MODAL: Criar álbum personalizado */}
       {showCreateAlbumModal && (
