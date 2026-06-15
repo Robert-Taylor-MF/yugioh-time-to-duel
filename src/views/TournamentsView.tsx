@@ -77,41 +77,33 @@ export const TournamentsView: React.FC = () => {
     setPendingWinnerConfirm({ roundNum, match, winnerName });
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  // --- Drag Scroll Handlers (Desktop & Mobile) ---
+  const handleDragStart = (clientX: number, clientY: number) => {
     if (!bracketRef.current) return;
     setIsDragging(true);
     hasDraggedRef.current = false;
-    setStartX(e.pageX - bracketRef.current.offsetLeft);
+    setStartX(clientX - bracketRef.current.offsetLeft);
     setScrollLeft(bracketRef.current.scrollLeft);
 
     const appContentEl = bracketRef.current.closest('.app-content') as HTMLElement;
     if (appContentEl) {
-      setStartY(e.pageY);
+      setStartY(clientY);
       setScrollTopVal(appContentEl.scrollTop);
     }
   };
 
-  const handleMouseLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleDragMove = (clientX: number, clientY: number) => {
     if (!isDragging || !bracketRef.current) return;
-    e.preventDefault();
     
     // Scroll X (horizontal)
-    const x = e.pageX - bracketRef.current.offsetLeft;
+    const x = clientX - bracketRef.current.offsetLeft;
     const walkX = (x - startX) * 1.5;
     bracketRef.current.scrollLeft = scrollLeft - walkX;
 
     // Scroll Y (vertical)
     const appContentEl = bracketRef.current.closest('.app-content') as HTMLElement;
     if (appContentEl) {
-      const walkY = (e.pageY - startY) * 1.5;
+      const walkY = (clientY - startY) * 1.5;
       appContentEl.scrollTop = scrollTopVal - walkY;
       
       if (Math.abs(walkX) > 5 || Math.abs(walkY) > 5) {
@@ -123,6 +115,37 @@ export const TournamentsView: React.FC = () => {
       }
     }
   };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    handleDragStart(e.pageX, e.pageY);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    handleDragMove(e.pageX, e.pageY);
+  };
+
+  const handleMouseUp = () => handleDragEnd();
+  const handleMouseLeave = () => handleDragEnd();
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    handleDragStart(touch.pageX, touch.pageY);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    handleDragMove(touch.pageX, touch.pageY);
+  };
+
+  const handleTouchEnd = () => handleDragEnd();
 
   const submitWinnerConfirm = () => {
     if (!pendingWinnerConfirm || !activeTournament) return;
@@ -288,6 +311,9 @@ export const TournamentsView: React.FC = () => {
           onMouseLeave={handleMouseLeave}
           onMouseUp={handleMouseUp}
           onMouseMove={handleMouseMove}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           style={{ 
             display: 'flex', 
             gap: '30px', 
