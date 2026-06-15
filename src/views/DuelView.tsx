@@ -16,8 +16,18 @@ export const DuelView: React.FC = () => {
     flipCoin,
     updatePlayerNames,
     profile,
-    updateProfile
+    updateProfile,
+    decks,
+    allCards,
+    deckCardStates,
+    updateCardState
   } = useApp();
+
+  // --- Favorite Deck ---
+  const favoriteDeck = decks.find(d => d.id === profile.favoriteDeckId);
+  const [showDeckPanel, setShowDeckPanel] = useState(false);
+  const [deckPanelTab, setDeckPanelTab] = useState<'main' | 'extra'>('main');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // --- States ---
   const [selectedPlayer, setSelectedPlayer] = useState<1 | 2>(1);
@@ -155,12 +165,71 @@ export const DuelView: React.FC = () => {
         <div
           onClick={() => setSelectedPlayer(1)}
           className={`lp-player-box p1-side ${selectedPlayer === 1 ? 'selected' : ''}`}
+          style={{ position: 'relative' }}
         >
           <div className="player-name-tag">
             <span>{p1Name}</span>
             {selectedPlayer === 1 && <span style={{ color: 'var(--gold)', fontSize: '10px' }}>● ALVO</span>}
           </div>
           <div className="lp-value">{p1Lp}</div>
+          
+          {/* Deck Box Floating Trigger */}
+          {favoriteDeck ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                playBeep();
+                setShowDeckPanel(true);
+              }}
+              style={{
+                position: 'absolute',
+                bottom: '8px',
+                right: '8px',
+                background: 'rgba(212, 175, 55, 0.1)',
+                border: '1px solid rgba(212, 175, 55, 0.3)',
+                color: 'var(--gold)',
+                borderRadius: '6px',
+                padding: '4px 8px',
+                fontSize: '9px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                transition: 'all 0.2s'
+              }}
+              className="premium-btn-hover"
+              title={`Ver Deck: ${favoriteDeck.name}`}
+            >
+              📦 {favoriteDeck.name.substring(0, 12)}{favoriteDeck.name.length > 12 ? '...' : ''} ({favoriteDeck.mainDeck.length})
+            </button>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                playBeep();
+                alert('Defina seu deck favorito no perfil para interagir com suas cartas durante o duelo!');
+              }}
+              style={{
+                position: 'absolute',
+                bottom: '8px',
+                right: '8px',
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                color: 'rgba(255, 255, 255, 0.3)',
+                borderRadius: '6px',
+                padding: '4px 8px',
+                fontSize: '9px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              📦 Sem Deck
+            </button>
+          )}
         </div>
 
         {/* Player 2 Box */}
@@ -508,6 +577,308 @@ export const DuelView: React.FC = () => {
                 }}
               >
                 Desfazer Última Ação (Corrigir)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Interactive Deck Box Panel Overlay */}
+      {showDeckPanel && favoriteDeck && (
+        <div className="standard-modal-overlay no-print" style={{ zIndex: 9999 }}>
+          <div 
+            className="standard-modal premium-glow" 
+            style={{ 
+              maxWidth: '450px', 
+              width: '95%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '20px',
+              background: 'radial-gradient(circle at center, #151821 0%, #0b0c10 100%)',
+              border: '1px solid rgba(212, 175, 55, 0.25)',
+              boxShadow: '0 0 24px rgba(212, 175, 55, 0.15)',
+              borderRadius: '16px'
+            }}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '24px' }}>📦</span>
+                <div>
+                  <h3 style={{ color: 'var(--gold)', fontSize: '15px', fontWeight: '900', margin: 0 }}>
+                    {favoriteDeck.name}
+                  </h3>
+                  <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)' }}>
+                    Interação de Cartas em Duelo
+                  </span>
+                </div>
+              </div>
+              <button 
+                onClick={() => { playBeep(); setShowDeckPanel(false); setSearchQuery(''); }}
+                style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', opacity: 0.7 }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div style={{ marginBottom: '12px' }}>
+              <input
+                type="text"
+                className="textbox"
+                placeholder="🔍 Buscar carta no baralho..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ width: '100%', padding: '6px 10px', fontSize: '12px' }}
+              />
+            </div>
+
+            {/* Tabs (Main Deck vs Extra Deck) */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+              <button
+                onClick={() => { playBeep(); setDeckPanelTab('main'); }}
+                style={{
+                  flex: 1,
+                  padding: '6px 12px',
+                  fontSize: '11px',
+                  fontWeight: 'bold',
+                  background: deckPanelTab === 'main' ? 'var(--gold)' : 'rgba(255,255,255,0.03)',
+                  color: deckPanelTab === 'main' ? '#000' : 'rgba(255,255,255,0.6)',
+                  border: deckPanelTab === 'main' ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                Baralho Principal ({favoriteDeck.mainDeck.length})
+              </button>
+              {favoriteDeck.extraDeck && favoriteDeck.extraDeck.length > 0 && (
+                <button
+                  onClick={() => { playBeep(); setDeckPanelTab('extra'); }}
+                  style={{
+                    flex: 1,
+                    padding: '6px 12px',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    background: deckPanelTab === 'extra' ? 'var(--blue)' : 'rgba(255,255,255,0.03)',
+                    color: deckPanelTab === 'extra' ? '#000' : 'rgba(255,255,255,0.6)',
+                    border: deckPanelTab === 'extra' ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '6px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Deck Extra ({favoriteDeck.extraDeck.length})
+                </button>
+              )}
+            </div>
+
+            {/* Card List (Scrollable) */}
+            <div 
+              style={{ 
+                flex: 1, 
+                overflowY: 'auto', 
+                paddingRight: '4px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                minHeight: '200px'
+              }}
+            >
+              {(() => {
+                const currentDeckList = deckPanelTab === 'main' ? favoriteDeck.mainDeck : favoriteDeck.extraDeck;
+                
+                // Map to actual card objects
+                const cardsWithIndex = currentDeckList.map((cardId, index) => {
+                  const card = allCards.find(c => c.id === cardId);
+                  return { card, cardId, index };
+                });
+
+                // Filter by search query
+                const filtered = cardsWithIndex.filter(item => {
+                  if (!searchQuery.trim()) return true;
+                  return item.card?.name.toLowerCase().includes(searchQuery.toLowerCase());
+                });
+
+                if (filtered.length === 0) {
+                  return (
+                    <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', padding: '30px 0', fontSize: '11px' }}>
+                      Nenhuma carta encontrada.
+                    </div>
+                  );
+                }
+
+                return filtered.map(({ card, cardId, index }) => {
+                  if (!card) return null;
+                  
+                  // Key for unique instance in deckCardStates
+                  const key = `${favoriteDeck.id}-${cardId}-${index}`;
+                  const state = deckCardStates[key] || { atkModifier: 0, defModifier: 0, counters: 0 };
+                  const isMonster = card.type?.toLowerCase().includes('monster');
+                  
+                  const currentAtk = isMonster ? Math.max(0, (card.atk || 0) + state.atkModifier) : 0;
+                  const currentDef = isMonster ? Math.max(0, (card.def || 0) + state.defModifier) : 0;
+
+                  const hasChanges = state.atkModifier !== 0 || state.defModifier !== 0 || state.counters > 0;
+
+                  return (
+                    <div 
+                      key={key}
+                      style={{
+                        background: 'rgba(255,255,255,0.02)',
+                        border: hasChanges ? '1px solid rgba(212,175,55,0.25)' : '1px solid rgba(255,255,255,0.05)',
+                        borderRadius: '10px',
+                        padding: '10px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        boxShadow: hasChanges ? '0 0 10px rgba(212,175,55,0.05)' : 'none',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {/* Card Info Header */}
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        {card.card_images?.[0]?.image_url_small ? (
+                          <img 
+                            src={card.card_images[0].image_url_small} 
+                            alt={card.name} 
+                            style={{ width: '32px', height: '46px', borderRadius: '4px', objectFit: 'cover' }} 
+                          />
+                        ) : (
+                          <div style={{ width: '32px', height: '46px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>
+                            🃏
+                          </div>
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '4px' }}>
+                            <strong style={{ fontSize: '11px', color: '#fff', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {card.name}
+                            </strong>
+                            {hasChanges && (
+                              <button
+                                onClick={() => {
+                                  playBeep();
+                                  updateCardState(key, { atkModifier: 0, defModifier: 0, counters: 0 });
+                                }}
+                                style={{
+                                  background: 'rgba(255,75,75,0.1)',
+                                  border: '1px solid rgba(255,75,75,0.3)',
+                                  color: 'var(--red)',
+                                  fontSize: '8px',
+                                  padding: '2px 4px',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontWeight: 'bold'
+                                }}
+                                title="Resetar Modificações"
+                              >
+                                Limpar
+                              </button>
+                            )}
+                          </div>
+                          <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', textTransform: 'capitalize' }}>
+                            {card.type}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Modifiers & Controls */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '8px' }}>
+                        {/* ATK & DEF (Monsters Only) */}
+                        {isMonster && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, minWidth: '130px' }}>
+                            {/* ATK Row */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
+                              <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.5)', fontWeight: 'bold' }}>
+                                ATK: <span style={{ color: state.atkModifier > 0 ? '#52c41a' : state.atkModifier < 0 ? '#ff4d4f' : '#fff' }}>{currentAtk}</span>
+                              </span>
+                              <div style={{ display: 'flex', gap: '4px' }}>
+                                <button
+                                  onClick={() => { playBeep(); updateCardState(key, { atkModifier: state.atkModifier - 100 }); }}
+                                  style={{ padding: '1px 4px', fontSize: '9px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '3px', cursor: 'pointer', width: '22px' }}
+                                >
+                                  -
+                                </button>
+                                <button
+                                  onClick={() => { playBeep(); updateCardState(key, { atkModifier: state.atkModifier + 100 }); }}
+                                  style={{ padding: '1px 4px', fontSize: '9px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '3px', cursor: 'pointer', width: '22px' }}
+                                >
+                                  +
+                                </button>
+                                <button
+                                  onClick={() => { playBeep(); updateCardState(key, { atkModifier: state.atkModifier + 500 }); }}
+                                  style={{ padding: '1px 4px', fontSize: '8px', background: 'rgba(212,175,55,0.1)', color: 'var(--gold)', border: '1px solid rgba(212,175,55,0.2)', borderRadius: '3px', cursor: 'pointer', fontWeight: 'bold' }}
+                                >
+                                  +500
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* DEF Row */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
+                              <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.5)', fontWeight: 'bold' }}>
+                                DEF: <span style={{ color: state.defModifier > 0 ? '#52c41a' : state.defModifier < 0 ? '#ff4d4f' : '#fff' }}>{currentDef}</span>
+                              </span>
+                              <div style={{ display: 'flex', gap: '4px' }}>
+                                <button
+                                  onClick={() => { playBeep(); updateCardState(key, { defModifier: state.defModifier - 100 }); }}
+                                  style={{ padding: '1px 4px', fontSize: '9px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '3px', cursor: 'pointer', width: '22px' }}
+                                >
+                                  -
+                                </button>
+                                <button
+                                  onClick={() => { playBeep(); updateCardState(key, { defModifier: state.defModifier + 100 }); }}
+                                  style={{ padding: '1px 4px', fontSize: '9px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '3px', cursor: 'pointer', width: '22px' }}
+                                >
+                                  +
+                                </button>
+                                <button
+                                  onClick={() => { playBeep(); updateCardState(key, { defModifier: state.defModifier + 500 }); }}
+                                  style={{ padding: '1px 4px', fontSize: '8px', background: 'rgba(212,175,55,0.1)', color: 'var(--gold)', border: '1px solid rgba(212,175,55,0.2)', borderRadius: '3px', cursor: 'pointer', fontWeight: 'bold' }}
+                                >
+                                  +500
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Counters (All Card Types) */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, minWidth: '130px', justifyContent: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
+                            <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.5)', fontWeight: 'bold' }}>
+                              Marcadores: <span style={{ color: state.counters > 0 ? '#1890ff' : '#fff', fontWeight: '900' }}>{state.counters}</span>
+                            </span>
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              <button
+                                onClick={() => { playBeep(); updateCardState(key, { counters: Math.max(0, state.counters - 1) }); }}
+                                style={{ padding: '1px 6px', fontSize: '9px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '3px', cursor: 'pointer' }}
+                              >
+                                -
+                              </button>
+                              <button
+                                onClick={() => { playBeep(); updateCardState(key, { counters: state.counters + 1 }); }}
+                                style={{ padding: '1px 6px', fontSize: '9px', background: 'rgba(24,144,255,0.1)', color: '#40a9ff', border: '1px solid rgba(24,144,255,0.3)', borderRadius: '3px', cursor: 'pointer', fontWeight: 'bold' }}
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Bottom Actions */}
+            <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px', display: 'flex', gap: '8px' }}>
+              <button 
+                className="btn-secondary" 
+                onClick={() => { playBeep(); setShowDeckPanel(false); setSearchQuery(''); }}
+                style={{ flex: 1, padding: '8px', fontSize: '11px', borderRadius: '6px', cursor: 'pointer', color: '#fff' }}
+              >
+                Voltar ao Duelo
               </button>
             </div>
           </div>

@@ -48,6 +48,12 @@ export interface Deck {
   coverCardId?: string;
 }
 
+export interface CardState {
+  atkModifier: number;
+  defModifier: number;
+  counters: number;
+}
+
 export interface TournamentMatch {
   id: string;
   player1: string | null;
@@ -84,6 +90,7 @@ export interface UserProfile {
   isPremium: boolean;
   theme?: 'default' | 'dark-magician' | 'blue-eyes';
   configured?: boolean;
+  favoriteDeckId?: string;
 }
 
 interface AppContextType {
@@ -136,6 +143,11 @@ interface AppContextType {
   updateProfile: (updates: Partial<UserProfile>) => void;
   togglePremium: () => void;
 
+  // Deck Interaction States during Duel
+  deckCardStates: Record<string, CardState>;
+  updateCardState: (key: string, state: Partial<CardState>) => void;
+  resetDeckCardStates: () => void;
+
   // API Cards Database
   allCards: Card[];
   loadingCards: boolean;
@@ -162,6 +174,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [p1Name, setP1Name] = useState<string>(() => getStored('p1Name', 'Duelista 1'));
   const [p2Name, setP2Name] = useState<string>(() => getStored('p2Name', 'Duelista 2'));
   const [duelLogs, setDuelLogs] = useState<DuelLog[]>(() => getStored('duelLogs', []));
+  const [deckCardStates, setDeckCardStates] = useState<Record<string, CardState>>(() => getStored('deckCardStates', {}));
 
   const [collection, setCollection] = useState<CollectionCard[]>(() => getStored('collection', []));
   const [customAlbums, setCustomAlbums] = useState<CustomAlbum[]>(() => getStored('customAlbums', []));
@@ -203,6 +216,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('yugioh_duel_p2Name', JSON.stringify(p2Name));
     localStorage.setItem('yugioh_duel_duelLogs', JSON.stringify(duelLogs));
   }, [p1Lp, p2Lp, p1Name, p2Name, duelLogs]);
+
+  useEffect(() => {
+    localStorage.setItem('yugioh_duel_deckCardStates', JSON.stringify(deckCardStates));
+  }, [deckCardStates]);
 
   useEffect(() => {
     localStorage.setItem('yugioh_duel_collection', JSON.stringify(collection));
@@ -329,6 +346,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         type: 'system'
       }
     ]);
+    setDeckCardStates({});
   };
 
   const rollDice = (): number => {
@@ -795,6 +813,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setProfile(prev => ({ ...prev, isPremium: !prev.isPremium }));
   };
 
+  const updateCardState = (key: string, updates: Partial<CardState>) => {
+    setDeckCardStates(prev => {
+      const current = prev[key] || { atkModifier: 0, defModifier: 0, counters: 0 };
+      return {
+        ...prev,
+        [key]: {
+          atkModifier: updates.atkModifier !== undefined ? updates.atkModifier : current.atkModifier,
+          defModifier: updates.defModifier !== undefined ? updates.defModifier : current.defModifier,
+          counters: updates.counters !== undefined ? Math.max(0, updates.counters) : current.counters,
+        }
+      };
+    });
+  };
+
+  const resetDeckCardStates = () => {
+    setDeckCardStates({});
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -833,6 +869,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         profile,
         updateProfile,
         togglePremium,
+        deckCardStates,
+        updateCardState,
+        resetDeckCardStates,
         allCards,
         loadingCards,
         loadingError,

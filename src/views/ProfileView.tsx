@@ -32,7 +32,7 @@ export const ProfileView: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempName, setTempName] = useState(profile.name);
   const [tempNickname, setTempNickname] = useState(profile.nickname);
-  const [favoriteDeckId, setFavoriteDeckId] = useState<string>('');
+  const [favoriteDeckId, setFavoriteDeckId] = useState<string>(profile.favoriteDeckId || '');
 
   // Preset Avatars list (Yugioh reference style)
   const avatars = [
@@ -48,7 +48,7 @@ export const ProfileView: React.FC = () => {
   const totalGames = profile.wins + profile.losses;
   const winrate = totalGames > 0 ? Math.round((profile.wins / totalGames) * 100) : 0;
   
-  const favoriteDeck = decks.find(d => d.id === favoriteDeckId) || decks[0];
+  const favoriteDeck = decks.find(d => d.id === favoriteDeckId);
 
   // --- Actions ---
   const handleSaveProfile = () => {
@@ -252,7 +252,11 @@ export const ProfileView: React.FC = () => {
               <select
                 className="textbox"
                 value={favoriteDeckId}
-                onChange={(e) => setFavoriteDeckId(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFavoriteDeckId(val);
+                  updateProfile({ favoriteDeckId: val || undefined });
+                }}
                 style={{ padding: '4px 8px', fontSize: '11px', flex: 1 }}
               >
                 <option value="">Nenhum</option>
