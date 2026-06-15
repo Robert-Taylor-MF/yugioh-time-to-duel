@@ -466,6 +466,91 @@ export const DecksView: React.FC = () => {
     }
   };
 
+  const parseYDK = (text: string) => {
+    const lines = text.split(/\r?\n/).map(l => l.trim());
+    const mainDeck: string[] = [];
+    const extraDeck: string[] = [];
+    const sideDeck: string[] = [];
+    
+    let currentSection: 'main' | 'extra' | 'side' | null = null;
+    
+    for (const line of lines) {
+      if (line.startsWith('#main')) {
+        currentSection = 'main';
+      } else if (line.startsWith('#extra')) {
+        currentSection = 'extra';
+      } else if (line.startsWith('#side') || line.startsWith('!side')) {
+        currentSection = 'side';
+      } else if (line.startsWith('#') || line.startsWith('!')) {
+        continue;
+      } else {
+        const passcode = line.split(' ')[0].trim();
+        if (/^\d+$/.test(passcode)) {
+          if (currentSection === 'main') {
+            mainDeck.push(passcode);
+          } else if (currentSection === 'extra') {
+            extraDeck.push(passcode);
+          } else if (currentSection === 'side') {
+            sideDeck.push(passcode);
+          }
+        }
+      }
+    }
+    
+    return { mainDeck, extraDeck, sideDeck };
+  };
+
+  const parseTXT = (text: string) => {
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+    const mainDeck: string[] = [];
+    const extraDeck: string[] = [];
+    const sideDeck: string[] = [];
+    
+    const isPasscodeList = lines.slice(0, 5).every(line => /^\d+$/.test(line));
+    
+    if (isPasscodeList) {
+      lines.forEach(line => {
+        if (/^\d+$/.test(line)) {
+          mainDeck.push(line);
+        }
+      });
+      return { mainDeck, extraDeck, sideDeck };
+    }
+    
+    let inSideSection = false;
+    
+    for (const line of lines) {
+      const upper = line.toUpperCase();
+      if (upper.includes('SIDE DECK') || upper.includes('SIDEBOARD') || upper.startsWith('SIDE:')) {
+        inSideSection = true;
+        continue;
+      }
+      if (upper.includes('MAIN DECK') || upper.includes('EXTRA DECK')) {
+        inSideSection = false;
+        continue;
+      }
+      
+      const match = line.match(/^(?:(\d+)\s*[xX]?\s+)?(.+)$/);
+      if (match) {
+        const qty = match[1] ? parseInt(match[1], 10) : 1;
+        const cardName = match[2].trim();
+        
+        const foundCard = allCards.find(c => c.name.toLowerCase() === cardName.toLowerCase());
+        if (foundCard) {
+          const listToPush = inSideSection 
+            ? sideDeck 
+            : (foundCard.type === 'Extra' ? extraDeck : mainDeck);
+            
+          for (let i = 0; i < qty; i++) {
+            listToPush.push(foundCard.id);
+          }
+        }
+      }
+    }
+    
+    return { mainDeck, extraDeck, sideDeck };
+  };
+
   const handleImportFromFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -475,24 +560,61 @@ export const DecksView: React.FC = () => {
     reader.onload = (event) => {
       try {
         const text = event.target?.result as string;
-        const data = JSON.parse(text);
-        executeImport(data);
+        const fileName = file.name.toLowerCase();
+        
+        if (fileName.endsWith('.ydk') || text.includes('#main') || text.includes('#extra')) {
+          const parsed = parseYDK(text);
+          executeImportYDK(file.name.replace('.ydk', ''), parsed);
+        } else if (fileName.endsWith('.txt')) {
+          const parsed = parseTXT(text);
+          executeImportYDK(file.name.replace('.txt', ''), parsed);
+        } else {
+          try {
+            const data = JSON.parse(text);
+            executeImport(data);
+          } catch (e) {
+            if (text.includes('#main') || text.includes('#extra')) {
+              const parsed = parseYDK(text);
+              executeImportYDK(file.name, parsed);
+            } else {
+              const parsed = parseTXT(text);
+              executeImportYDK(file.name, parsed);
+            }
+          }
+        }
       } catch (err) {
-        setImportError('Erro ao ler arquivo: formato JSON inválido.');
+        setImportError('Erro ao ler arquivo: formato inválido ou não suportado.');
       }
     };
     reader.readAsText(file);
   };
 
   const handleImportFromCode = () => {
-    if (!importCodeInput.trim()) return;
+    const rawInput = importCodeInput.trim();
+    if (!rawInput) return;
     setImportError(null);
+    
+    if (rawInput.includes('#main') || rawInput.includes('#extra')) {
+      const parsed = parseYDK(rawInput);
+      executeImportYDK('Deck Importado YDK', parsed);
+      return;
+    }
+    
+    const lines = rawInput.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+    const isBase64 = /^[A-Za-z0-9+/=]+$/.test(rawInput) && !rawInput.includes(' ');
+    
+    if (lines.length > 1 && !isBase64) {
+      const parsed = parseTXT(rawInput);
+      executeImportYDK('Deck Importado TXT', parsed);
+      return;
+    }
+    
     try {
-      const decodedStr = decodeURIComponent(escape(atob(importCodeInput.trim())));
+      const decodedStr = decodeURIComponent(escape(atob(rawInput)));
       const data = JSON.parse(decodedStr);
       executeImport(data);
     } catch (err) {
-      setImportError('Erro ao ler código: Código de compartilhamento inválido ou corrompido.');
+      setImportError('Erro ao ler código: Formato de código de compartilhamento, YDK ou TXT inválido.');
     }
   };
 
@@ -520,6 +642,34 @@ export const DecksView: React.FC = () => {
     setImportCodeInput('');
     setImportError(null);
     setShowImportModal(false);
+  };
+
+  const executeImportYDK = (deckName: string, parsedDeck: { mainDeck: string[], extraDeck: string[], sideDeck: string[] }) => {
+    const validMain = parsedDeck.mainDeck.filter(id => allCards.some(c => c.id === id));
+    const validExtra = parsedDeck.extraDeck.filter(id => allCards.some(c => c.id === id));
+    const validSide = parsedDeck.sideDeck.filter(id => allCards.some(c => c.id === id));
+    
+    if (validMain.length === 0 && validExtra.length === 0 && validSide.length === 0) {
+      setImportError('Nenhuma carta correspondente encontrada no banco de dados do aplicativo.');
+      return;
+    }
+    
+    const name = deckName || 'Deck Importado';
+    const newDeck = createDeck(name);
+    
+    updateDeck(
+      newDeck.id, 
+      validMain, 
+      validExtra, 
+      validSide, 
+      [], 
+      '', 
+      validMain[0] || validExtra[0] || null
+    );
+    
+    setShowImportModal(false);
+    setImportCodeInput('');
+    setImportError(null);
   };
 
   // Selector filtering
@@ -1494,11 +1644,11 @@ export const DecksView: React.FC = () => {
               {/* Option A: File upload */}
               <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px' }}>
                 <label style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.5)', display: 'block', marginBottom: '6px', fontWeight: '700' }}>
-                  OPÇÃO A: IMPORTAR ARQUIVO DECK.JSON
+                  OPÇÃO A: IMPORTAR ARQUIVO (.JSON, .YDK, .TXT)
                 </label>
                 <input 
                   type="file" 
-                  accept=".json" 
+                  accept=".json,.ydk,.txt" 
                   onChange={handleImportFromFile}
                   style={{ display: 'none' }}
                   id="deck-file-import-input"
@@ -1519,18 +1669,18 @@ export const DecksView: React.FC = () => {
                     background: 'rgba(212, 175, 55, 0.04)'
                   }}
                 >
-                  <Download size={14} style={{ color: 'var(--gold)' }} /> Escolher arquivo .json
+                  <Download size={14} style={{ color: 'var(--gold)' }} /> Escolher arquivo do deck
                 </label>
               </div>
 
               {/* Option B: Share code */}
               <div>
                 <label style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.5)', display: 'block', marginBottom: '6px', fontWeight: '700' }}>
-                  OPÇÃO B: IMPORTAR POR CÓDIGO
+                  OPÇÃO B: IMPORTAR POR CÓDIGO, TEXTO OU YDK COPIADO
                 </label>
                 <textarea
                   className="textbox"
-                  placeholder="Cole o código de compartilhamento recebido aqui..."
+                  placeholder="Cole o código de compartilhamento, texto YDK ou lista de cartas aqui..."
                   value={importCodeInput}
                   onChange={e => { setImportCodeInput(e.target.value); setImportError(null); }}
                   style={{ minHeight: '80px', fontSize: '10px', resize: 'vertical', lineHeight: '1.4', fontFamily: 'monospace' }}
@@ -1541,7 +1691,7 @@ export const DecksView: React.FC = () => {
                   disabled={!importCodeInput.trim()}
                   style={{ width: '100%', fontSize: '11px', padding: '8px 12px', marginTop: '6px' }}
                 >
-                  Confirmar Importação por Código
+                  Confirmar Importação
                 </button>
               </div>
 
