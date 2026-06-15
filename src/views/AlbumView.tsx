@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { CardDetailModal } from '../components/CardDetailModal';
 import { 
@@ -13,7 +13,9 @@ import {
   Trash2, 
   FolderOpen, 
   ArrowLeft,
-  BookOpenCheck
+  BookOpenCheck,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { type Card } from '../data/defaultCards';
 
@@ -42,7 +44,13 @@ export const AlbumView: React.FC = () => {
   const [activeTypeFilter, setActiveTypeFilter] = useState<'All' | 'Monster' | 'Spell' | 'Trap' | 'Extra'>('All');
   const [activeRarityFilter, setActiveRarityFilter] = useState<string>('All');
   const [visualFilter, setVisualFilter] = useState<'All' | 'Owned' | 'Wanted' | 'Favorites'>('All');
-  
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, activeTypeFilter, activeRarityFilter, visualFilter]);
+
   // Custom album selector popup state
   const [addingCardToAlbum, setAddingCardToAlbum] = useState<Card | null>(null);
 
@@ -88,7 +96,12 @@ export const AlbumView: React.FC = () => {
     return matchesSearch && matchesType && matchesRarity;
   });
 
-  const visibleCards = filteredCards.slice(0, 50);
+  const cardsPerPage = 50;
+  const totalPages = Math.max(1, Math.ceil(filteredCards.length / cardsPerPage));
+  const activePage = Math.min(currentPage, totalPages);
+  const startIndex = (activePage - 1) * cardsPerPage;
+  const endIndex = startIndex + cardsPerPage;
+  const visibleCards = filteredCards.slice(startIndex, endIndex);
 
   // --- Album Actions ---
   const handleCreateAlbum = () => {
@@ -242,7 +255,7 @@ export const AlbumView: React.FC = () => {
 
           {/* Collection Stats Header */}
           <div className="no-print" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px', padding: '0 4px', marginBottom: '8px' }}>
-            <span>Cartas filtradas: {filteredCards.length}</span>
+            <span>Exibindo {filteredCards.length > 0 ? `${startIndex + 1} a ${Math.min(endIndex, filteredCards.length)}` : '0'} de {filteredCards.length} cartas filtradas</span>
             <span>Total: {collection.reduce((sum, item) => sum + item.quantity, 0)} possuídas / {collection.reduce((sum, item) => sum + (item.wanted || 0), 0)} desejadas</span>
           </div>
 
@@ -487,6 +500,64 @@ export const AlbumView: React.FC = () => {
               })
             )}
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div 
+              className="no-print" 
+              style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                gap: '12px', 
+                margin: '12px 0 4px 0', 
+                padding: '8px',
+                background: 'rgba(255,255,255,0.02)',
+                borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.04)'
+              }}
+            >
+              <button
+                className="qty-btn"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={activePage === 1}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 0,
+                  opacity: activePage === 1 ? 0.3 : 1,
+                  cursor: activePage === 1 ? 'not-allowed' : 'pointer'
+                }}
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              <span style={{ fontSize: '11px', color: '#fff', fontWeight: '600' }}>
+                Página {activePage} de {totalPages}
+              </span>
+
+              <button
+                className="qty-btn"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={activePage === totalPages}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 0,
+                  opacity: activePage === totalPages ? 0.3 : 1,
+                  cursor: activePage === totalPages ? 'not-allowed' : 'pointer'
+                }}
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
 
         </>
       )}
