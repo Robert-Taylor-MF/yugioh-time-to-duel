@@ -488,12 +488,6 @@ export const AlbumView: React.FC = () => {
             )}
           </div>
 
-          {/* Mensagem de paginação se houver mais de 50 */}
-          {filteredCards.length > 50 && (
-            <div className="no-print" style={{ textAlign: 'center', padding: '16px 0', fontSize: '11px', color: 'rgba(255,255,255,0.3)', borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: '16px' }}>
-              Visualizando as primeiras 50 de {filteredCards.length} cartas encontradas. Refine seus filtros para ver mais.
-            </div>
-          )}
         </>
       )}
 
@@ -704,25 +698,50 @@ export const AlbumView: React.FC = () => {
         className="no-print" 
         style={{ 
           display: 'flex', 
-          gap: '8px', 
+          gap: '12px', 
           marginTop: '16px', 
           borderTop: '1px solid rgba(255,255,255,0.06)', 
-          paddingTop: '12px' 
+          paddingTop: '12px',
+          justifyContent: 'center',
+          alignItems: 'center'
         }}
       >
         <button 
           className="btn-premium" 
           onClick={handleExportData} 
-          style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '11px', padding: '8px 12px' }}
+          title="Exportar Backup JSON"
+          style={{ 
+            width: '40px', 
+            height: '40px', 
+            borderRadius: '50%', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            padding: 0, 
+            boxShadow: '0 4px 10px rgba(0,0,0,0.3)' 
+          }}
         >
-          <Download size={13} /> Exportar Backup
+          <Download size={16} />
         </button>
         <button 
           className="btn-premium" 
           onClick={handlePrint} 
-          style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '11px', padding: '8px 12px', background: 'linear-gradient(135deg, #1f2937 0%, #111827 100%)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+          title="Gerar PDF / Imprimir"
+          style={{ 
+            width: '40px', 
+            height: '40px', 
+            borderRadius: '50%', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            padding: 0, 
+            background: 'linear-gradient(135deg, #1f2937 0%, #111827 100%)', 
+            border: '1px solid rgba(255,255,255,0.1)', 
+            color: '#fff', 
+            boxShadow: '0 4px 10px rgba(0,0,0,0.3)' 
+          }}
         >
-          <Printer size={13} /> Gerar PDF / Imprimir
+          <Printer size={16} />
         </button>
       </div>
 
