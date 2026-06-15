@@ -64,6 +64,25 @@ export const ProfileView: React.FC = () => {
     setShowAvatarModal(false);
   };
 
+  const handleUploadAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.size > 3 * 1024 * 1024) {
+      alert('A imagem é muito grande! Escolha uma imagem de até 3MB.');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64Url = event.target?.result as string;
+      if (base64Url) {
+        handleSelectAvatar(base64Url);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleIncrementWins = () => {
     updateProfile({ wins: profile.wins + 1 });
   };
@@ -422,9 +441,42 @@ export const ProfileView: React.FC = () => {
               ))}
             </div>
 
+            {/* File upload option */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px' }}>
+              <label style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)' }}>Ou envie uma imagem do seu aparelho:</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleUploadAvatar}
+                style={{ display: 'none' }}
+                id="avatar-file-upload-input"
+              />
+              <label
+                htmlFor="avatar-file-upload-input"
+                className="btn-premium"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '8px 12px',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  borderRadius: '6px',
+                  background: 'linear-gradient(135deg, #111827 0%, #1f2937 100%)',
+                  border: '1px dashed var(--gold)',
+                  color: 'var(--gold)',
+                  boxShadow: 'none',
+                  margin: '4px 0'
+                }}
+              >
+                <Upload size={13} /> Selecionar Imagem Local
+              </label>
+            </div>
+
             {/* Custom URL input option */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
-              <label style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)' }}>Ou insira a URL de uma foto customizada:</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px' }}>
+              <label style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)' }}>Ou insira a URL de uma foto da internet:</label>
               <input
                 type="text"
                 className="textbox"
