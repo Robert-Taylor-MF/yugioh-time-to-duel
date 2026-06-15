@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useApp, type TournamentMatch } from '../context/AppContext';
-import { Plus, Trophy, Trash2, RefreshCw, Award, Swords } from 'lucide-react';
+import { Plus, Trophy, Trash2, RefreshCw, Award, Swords, ArrowLeft } from 'lucide-react';
 
 export const TournamentsView: React.FC = () => {
   const {
@@ -817,14 +817,26 @@ export const TournamentsView: React.FC = () => {
                   />
                   <button 
                     type="button" 
-                    className="qty-btn"
                     onClick={() => {
                       setDeckInputMode('select');
                       setCustomDeckName('');
                     }}
-                    style={{ fontSize: '10px', padding: '0 8px', borderRadius: '8px' }}
+                    style={{ 
+                      fontSize: '11px', 
+                      padding: '0 12px', 
+                      borderRadius: '8px',
+                      height: '38px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      color: 'rgba(255, 255, 255, 0.6)',
+                      cursor: 'pointer',
+                      boxSizing: 'border-box'
+                    }}
                   >
-                    Voltar
+                    <ArrowLeft size={12} /> Voltar
                   </button>
                 </div>
               )}
